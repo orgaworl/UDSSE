@@ -1,2 +1,13 @@
-# UDSSE
-A new DSSE solution that combines both UE and DSSE .
+### Environment:
+
+OS: Ubunatu 22.04
+
+openssl 3.0.2 15 Mar 2022
+
+PBC 0.5.4
+
+### How to compile:
+
+       g++  ./sourceCode.cpp -L. -lpbc -lgmp -lssl -lcrypto
+
+
