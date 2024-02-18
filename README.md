@@ -8,6 +8,6 @@ PBC     0.5.4
 
 ### How to compile:
 
-       g++  ./sourceCode.cpp -L. -lpbc -lgmp -lssl -lcrypto
+       g++  ./main.cpp -L. -lpbc -lgmp -lssl -lcrypto
 
 
