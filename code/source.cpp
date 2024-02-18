@@ -1,11 +1,14 @@
 #include <stdio.h>
-#include "/usr/local/include/pbc/pbc.h"
-#include <iostream>
-#include<ctime>
-#include <openssl/sha.h>
 #include <string.h>
 #include<list>
+#include<ctime>
+#include <iostream>
+#include "/usr/local/include/pbc/pbc.h"
+
+#include <openssl/sha.h>
+
 using namespace std;
+
 #define DIV_ZERO_ERROR 0
 #define SUCESS 1
 
