@@ -4,16 +4,8 @@
 #include <ctime>
 #include <iostream>
 #include "/usr/local/include/pbc/pbc.h"
-#include <openssl/sha.h>
-#include "UPDSSE.h"
-
+#include"SRE.h"
 using namespace std;
-
-#define DIV_ZERO_ERROR 0
-#define SUCESS 1
-
-#define DECRYPT_SUCESS 1
-#define DECRYPT_FAIL 0
 
 // FILE *poi = fopen("./output.txt", "w+");
 //  FILE *encryT = fopen("./time/encryT.txt", "w+");
@@ -37,7 +29,7 @@ void INIT()
 }
 
 // 测试加密解密能力
-int test_UPDSSE(const long d, long pucTimes, int updateTime)
+int test_UPE(const long d, long pucTimes, int updateTime)
 {
   // 1.2 其他参数设置
   // (1) 明文无关参数
@@ -78,12 +70,12 @@ int test_UPDSSE(const long d, long pucTimes, int updateTime)
 
   // 2.生成加密公钥PP和私钥SK_0
   printf("KEYGEN START\n");
-  UPDSSE_Keygen(pairing, k, d, t0, PP, SK0);
+  UPE_Keygen(pairing, k, d, t0, PP, SK0);
 
   // 3.使用SK对M进行加密
   printf("ENCRYPT START\n");
   startT = clock();
-  UPDSSE_Encrypy(pairing, PP, SK0, M, TagList, CT);
+  UPE_Encrypy(pairing, PP, SK0, M, TagList, CT);
   endT = clock();
   // fprintf(encryT,"%f ",((double)endT-startT)*1000.0/CLOCKS_PER_SEC);
 
@@ -94,7 +86,7 @@ int test_UPDSSE(const long d, long pucTimes, int updateTime)
   {
     printf("PUNCTURE \n");
     startT = clock();
-    UPDSSE_Puncture(pairing, PP, SKi, puncTags[i]);
+    UPE_Puncture(pairing, PP, SKi, puncTags[i]);
     endT = clock();
     averTime += ((double)endT - startT) * 1000.0 / CLOCKS_PER_SEC;
     // printf("%f \n",((double)endT-startT)*1000.0/CLOCKS_PER_SEC);
@@ -110,8 +102,8 @@ int test_UPDSSE(const long d, long pucTimes, int updateTime)
   {
     printf("UPDATE   \n");
     startT = clock();
-    UPDSSE_UPDATE_SK(pairing, PP, SKi, token_);
-    UPDSSE_UPDATE_CT(pairing, PP, CT, token_);
+    UPE_UPDATE_SK(pairing, PP, SKi, token_);
+    UPE_UPDATE_CT(pairing, PP, CT, token_);
     endT = clock();
     averTime += ((double)endT - startT) * 1000.0 / CLOCKS_PER_SEC;
     // printf("%f\n",((double)endT-startT)*1000.0/CLOCKS_PER_SEC);
@@ -121,7 +113,7 @@ int test_UPDSSE(const long d, long pucTimes, int updateTime)
   // 6. decrypt
   printf("DECRYPT  \n");
   startT = clock();
-  UPDSSE_Decrypt(pairing, SKi, CT, plain);
+  UPE_Decrypt(pairing, SKi, CT, plain);
   endT = clock();
   // printf("%f\n",((double)endT-startT)*1000.0/CLOCKS_PER_SEC);
   // fprintf(decryT,"%f ",((double)endT-startT)*1000.0/CLOCKS_PER_SEC);
@@ -147,7 +139,7 @@ void calTime()
   {
     for (int d = 0; d < max_d; d++)
     {
-      test_UPDSSE(d, puncTimes, 1);
+      test_UPE(d, puncTimes, 1);
     }
     printf("%d\n", puncTimes);
     // fprintf(decryT,"\n");
@@ -199,7 +191,7 @@ public:
   {
     this->recordNum = 0;
   }
-  int UPDSSEDB_ADD(CT_S *CT, PP_S *PP)
+  int UPEDB_ADD(CT_S *CT, PP_S *PP)
   {
     DATA_ENTRY entry;
     entry.CT = CT;
@@ -208,7 +200,7 @@ public:
     this->recordNum++;
     return 0;
   }
-  int UPDSSEDB_DELETE()
+  int UPEDB_DELETE()
   {
     // 显示数据库所有项
     int ord = 0;
@@ -242,13 +234,13 @@ public:
     list<DATA_ENTRY>::iterator it;
     for (it = DATABASE.begin(); it != DATABASE.end(); it++)
     {
-      UPDSSE_UPDATE_CT(pairing, it->PP, it->CT, token_);
+      UPE_UPDATE_CT(pairing, it->PP, it->CT, token_);
     }
 
     // delete token_;
     return 0;
   }
-  CT_S *UPDSSEDB_SEARCH(element_t *tagToSearch, int tagNum)
+  CT_S *UPEDB_SEARCH(element_t *tagToSearch, int tagNum)
   {
     if (tagNum <= 0)
     {
@@ -287,6 +279,7 @@ public:
   }
 };
 
+
 int serverSimulation()
 {
   unsigned char buf[120];
@@ -306,7 +299,7 @@ int serverSimulation()
   element_set_si(t0, 0);
 
   printf("密钥生成中.\n");
-  UPDSSE_Keygen(pairing, k, maxTagNum, t0, PP, SK);
+  UPE_Keygen(pairing, k, maxTagNum, t0, PP, SK);
   printf("生成完成,按任意键继续.\n");
   getchar();
   system("clear");
@@ -353,12 +346,12 @@ int serverSimulation()
       printf("(2) 请输入待加密内容:\n");
       cin >> buf;
       element_from_bytes(M, buf);
-      UPDSSE_Encrypy(pairing, PP, SK, M, tagList, CT);
+      UPE_Encrypy(pairing, PP, SK, M, tagList, CT);
 
       printf("(3) 请输入内容标识ID:\n");
       CT->id = new char[32];
       cin >> CT->id;
-      DATABASE.UPDSSEDB_ADD(CT, PP);
+      DATABASE.UPEDB_ADD(CT, PP);
 
       system("clear");
       printf("加密后记录:\n");
@@ -376,7 +369,7 @@ int serverSimulation()
     {
       token *tok;
       // 用户更新自己的密钥
-      UPDSSE_UPDATE_SK(pairing, PP, SK, tok);
+      UPE_UPDATE_SK(pairing, PP, SK, tok);
       // 数据库更新所有用户上传的密文
       DATABASE.DB_UPDATE(tok);
       printf("已成功更新\n");
@@ -398,14 +391,14 @@ int serverSimulation()
         Hash(searchTag[i], buf);
         // element_printf("%B\n", searchTag[i]);
       }
-      CT = DATABASE.UPDSSEDB_SEARCH(searchTag, tagNum);
+      CT = DATABASE.UPEDB_SEARCH(searchTag, tagNum);
       if (CT == NULL)
       {
         break;
       }
 
       printf("尝试使用密钥解密:");
-      int res = UPDSSE_Decrypt(pairing, SK, CT, M);
+      int res = UPE_Decrypt(pairing, SK, CT, M);
       if (res == DECRYPT_FAIL)
       {
         printf("所持有的密钥无法解密该密文\n");
@@ -422,7 +415,7 @@ int serverSimulation()
     }
     case 4:
     {
-      DATABASE.UPDSSEDB_DELETE();
+      DATABASE.UPEDB_DELETE();
       break;
     }
     case 5:
@@ -440,7 +433,7 @@ int serverSimulation()
       }
       for (int i = 0; i < tagNum; i++)
       {
-        UPDSSE_Puncture(pairing, PP, SK, puncTag[i]);
+        UPE_Puncture(pairing, PP, SK, puncTag[i]);
       }
       printf("密钥穿刺完成");
     }
@@ -466,7 +459,7 @@ int serverSimulation()
 int main(int argc, char const *argv[])
 {
   INIT();
-  // test_UPDSSE(4,4,4);
+  // test_UPE(4,4,4);
   serverSimulation();
   return 0;
 }
