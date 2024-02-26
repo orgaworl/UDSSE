@@ -92,17 +92,22 @@ int client(void)
             // Setup
             printf("U r creating a new database stored in the server.\n\
                 All settings will be cleared and set to default values.");
-                
+            UDSSE_Setup(sfd, );
             break;
         case 2:
             // ADD
 
+            UDSSE_Update(sfd, OP_ADD);
+
             break;
         case 3:
             // DEL
+            UDSSE_Update(sfd, OP_DEL);
+
             break;
         case 4:
             // Search
+            UDSSE_Search(sfd, );
             break;
         case 9:
             goto END;

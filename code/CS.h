@@ -13,9 +13,11 @@
 #include <arpa/inet.h>
 #include <iostream>
 #include <stdlib.h>
-
+#include "UDSSE.h"
 #define SERV_PORT 9988
 #define SERV_IP "127.0.0.1"
+
+
 int server(void);
 int client(void);
 int printClientMenu();
