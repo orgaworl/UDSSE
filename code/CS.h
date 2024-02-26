@@ -13,10 +13,13 @@
 #include <arpa/inet.h>
 #include <iostream>
 #include <stdlib.h>
+#include <map>
+#include <vector>
 #include "UDSSE.h"
 #define SERV_PORT 9988
 #define SERV_IP "127.0.0.1"
 
+map<string,element_t> MSK;
 
 int server(void);
 int client(void);

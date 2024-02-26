@@ -61,25 +61,34 @@ int server(void)
     return 0;
 }
 
+struct mapValPair
+{
+    element_t msk;
+    int i;
+    vector<element_t> D;
+};
+map<string,mapValPair> MAP;
+element_t K;
+
+
 int client(void)
 {
     int sfd, len;
     struct sockaddr_in serv_addr;
     char buf[BUFSIZ];
-
     /*创建一个socket 指定IPv4 TCP*/
     sfd = socket(AF_INET, SOCK_STREAM, 0);
-
     /*初始化一个地址结构:*/
     bzero(&serv_addr, sizeof(serv_addr));                    // 清零
     serv_addr.sin_family = AF_INET;                          // IPv4协议族
     inet_pton(AF_INET, SERV_IP, &serv_addr.sin_addr.s_addr); // 指定IP 字符串类型转换为网络字节序 参3:传出参数
     serv_addr.sin_port = htons(SERV_PORT);                   // 指定端口 本地转网络字节序
-
     /*根据地址结构链接指定服务器进程*/
     connect(sfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-
     printf("Connect Server Successful.\n");
+
+    int lambda = 1024;
+    int d = 1024;
     while (1)
     {
         system("clear");
@@ -92,22 +101,22 @@ int client(void)
             // Setup
             printf("U r creating a new database stored in the server.\n\
                 All settings will be cleared and set to default values.");
-            UDSSE_Setup(sfd, );
+            UDSSE_Setup(sfd, lambda, d);
             break;
         case 2:
             // ADD
 
-            UDSSE_Update(sfd, OP_ADD);
+            UDSSE_Update(sfd, OP_ADD, omega, ind);
 
             break;
         case 3:
             // DEL
-            UDSSE_Update(sfd, OP_DEL);
+            UDSSE_Update(sfd, OP_DEL, omega, ind);
 
             break;
         case 4:
             // Search
-            UDSSE_Search(sfd, );
+            UDSSE_Search(sfd, omega, i);
             break;
         case 9:
             goto END;

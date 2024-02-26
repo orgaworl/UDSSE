@@ -5,22 +5,45 @@
  */
 #include"UDSSE.h"
 
-int UDSSE_Setup(int sfd,int lambda,int d)
+
+int UDSSE_Setup(pairing_t &pairing,int sfd,int lambda,int d)
 {
+    element_init_G1(K,pairing);
+    element_random(K);
+    lambda_=lambda;
+    d_=d;
+    return 0;
+}
+int UDSSE_Search(pairing_t &pairing,int sfd,element_t &omega,int i)
+{
+
+}
+int UDSSE_Update(pairing_t &pairing,int sfd,OP_TYPE op,char* &omega,element_t& ind)
+{
+    mapValPair *temp=&MAP[omega];
     
+    if(temp==nullptr)
+    {
+        SRE_KGen(pairing,&temp->msk);
+    }
+
 }
-int UDSSE_Search(int sfd,element_t &K,element_t &omega)
+int UDSSE_UpdateKey(pairing_t &pairing,int sfd,element_t &omega)
 {
 
 }
-int UDSSE_Update(int sfd,element_t &K,OP_TYPE op,int id,element_t &omega,element_t &ind)
-{
 
-}
-int UDSSE_UpdateKey(int sfd,element_t &K,element_t &omega)
-{
 
-}
+
+
+
+
+
+
+
+
+
+
 
 
 

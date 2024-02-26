@@ -1,3 +1,8 @@
+<!--
+ * @Author: orgaworl
+ * @Email: orgaworl@outlook.com
+ * @Date: 2024-02-18 16:20:23
+-->
 ### Environment:
 
 OS: Ubunatu 22.04
@@ -8,6 +13,7 @@ PBC     0.5.4
 
 ### How to compile:
 
-       g++  ./main.cpp -L. -lpbc -lgmp -lssl -lcrypto
+    cd ./code
+    make
 
 
