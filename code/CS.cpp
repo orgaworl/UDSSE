@@ -5,8 +5,20 @@
  */
 #include "CS.h"
 
+// 1.1 初始化双线性对
+pairing_t pairing;
+void INIT()
+{
+    char param[1024];
+    FILE *file = fopen("../param/a.param", "r");
+    size_t count = fread(param, 1, 1024, file);
+    fclose(file);
+    pairing_init_set_buf(pairing, param, count);
+}
+
 int server(void)
 {
+
     int sfd, cfd;
     int len, i;
     char buf[BUFSIZ], clie_IP[BUFSIZ];
@@ -35,11 +47,11 @@ int server(void)
     clie_addr_len = sizeof(clie_addr_len);
     /*参数1是sfd; 参2传出参数, 参3传入传入参数, 全部是client端的参数*/
     cfd = accept(sfd, (struct sockaddr *)&clie_addr, &clie_addr_len); /*监听客户端链接, 会阻塞*/
-
     printf("client IP:%s\tport:%d\n",
            inet_ntop(AF_INET, &clie_addr.sin_addr.s_addr, clie_IP, sizeof(clie_IP)),
            ntohs(clie_addr.sin_port));
 
+    INIT();
     while (1)
     {
         /*读取客户端发送数据*/
@@ -61,15 +73,14 @@ int server(void)
     return 0;
 }
 
-struct mapValPair
-{
-    element_t msk;
-    int i;
-    vector<element_t> D;
-};
-map<string,mapValPair> MAP;
-element_t K;
-
+// struct mapValPair
+// {
+//     element_t msk;
+//     int i;
+//     vector<element_t> D;
+// };
+// map<string,mapValPair> MAP;
+// element_t K;
 
 int client(void)
 {
@@ -87,8 +98,11 @@ int client(void)
     connect(sfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
     printf("Connect Server Successful.\n");
 
+    INIT();
     int lambda = 1024;
-    int d = 1024;
+    int d = 3;
+    char tempKeyWord[MAX_KEYWORD_LEN];
+    char tempIndice[MAX_INDICE_LEN];
     while (1)
     {
         system("clear");
@@ -101,22 +115,24 @@ int client(void)
             // Setup
             printf("U r creating a new database stored in the server.\n\
                 All settings will be cleared and set to default values.");
-            UDSSE_Setup(sfd, lambda, d);
+            UDSSE_Setup(pairing, sfd, lambda, d);
             break;
         case 2:
             // ADD
-
-            UDSSE_Update(sfd, OP_ADD, omega, ind);
+            scanf("%s  %s", &tempKeyWord, &tempIndice);
+            UDSSE_Update(pairing, sfd, OP_ADD, tempKeyWord, tempIndice);
 
             break;
         case 3:
             // DEL
-            UDSSE_Update(sfd, OP_DEL, omega, ind);
+            scanf("%s  %s", &tempKeyWord, &tempIndice);
+            UDSSE_Update(pairing, sfd, OP_DEL, tempKeyWord, tempIndice);
 
             break;
         case 4:
             // Search
-            UDSSE_Search(sfd, omega, i);
+            scanf("%s", &tempKeyWord);
+            UDSSE_Search(pairing, sfd, tempKeyWord);
             break;
         case 9:
             goto END;

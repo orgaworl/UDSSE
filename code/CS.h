@@ -18,9 +18,10 @@
 #include "UDSSE.h"
 #define SERV_PORT 9988
 #define SERV_IP "127.0.0.1"
+#define MAX_KEYWORD_LEN 32
+#define MAX_INDICE_LEN 32
 
-map<string,element_t> MSK;
-
+void INIT();
 int server(void);
 int client(void);
 int printClientMenu();

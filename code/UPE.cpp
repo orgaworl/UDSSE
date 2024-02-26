@@ -110,7 +110,7 @@ void V(pairing_t &pairing, element_t &result, PP_S *&PP_, element_t x, element_t
 }
 
 // 组件
-int UPE_Keygen(pairing_t &pairing, long k, long d, element_t &t0, PP_S *&PP_, SK_S *&SK0)
+int UPE_Keygen(pairing_t &pairing, long k, long d, PP_S *&PP_, SK_S *&SK0)
 {
     // k           安全参数
     // d           tag总数
@@ -176,6 +176,12 @@ int UPE_Keygen(pairing_t &pairing, long k, long d, element_t &t0, PP_S *&PP_, SK
     SK0 = new SK_S(0, pairing);
     element_add(tempZr, alpha, r);
     element_pow_zn(SK0->sk0, PP[2], tempZr); //
+
+    // t0为G1单位元
+    element_t t0;
+    element_init_G1(t0, pairing);
+    element_set1(t0);
+
     H(tempZr, t0);
     V(pairing, tempG1, PP_, tempZr, xList, d);
     element_pow_zn(SK0->SKmain[0][0], tempG1, r); //

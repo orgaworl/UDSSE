@@ -70,7 +70,7 @@ int test_UPE(const long d, long pucTimes, int updateTime)
 
   // 2.生成加密公钥PP和私钥SK_0
   printf("KEYGEN START\n");
-  UPE_Keygen(pairing, k, d, t0, PP, SK0);
+  UPE_Keygen(pairing, k, d, PP, SK0);
 
   // 3.使用SK对M进行加密
   printf("ENCRYPT START\n");
@@ -299,7 +299,7 @@ int serverSimulation()
   element_set_si(t0, 0);
 
   printf("密钥生成中.\n");
-  UPE_Keygen(pairing, k, maxTagNum, t0, PP, SK);
+  UPE_Keygen(pairing, k, maxTagNum, PP, SK);
   printf("生成完成,按任意键继续.\n");
   getchar();
   system("clear");

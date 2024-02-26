@@ -179,7 +179,7 @@ int Hash(element_t &result, unsigned char *str);
 void V(pairing_t &pairing, element_t &result, PP_S *&PP_, element_t x, element_t *&xc, long d);
 
 // 组件
-int UPE_Keygen(pairing_t &pairing, long k, long d, element_t &t0, PP_S *&PP_, SK_S *&SK0);
+int UPE_Keygen(pairing_t &pairing, long k, long d, PP_S *&PP_, SK_S *&SK0);
 
 int UPE_Encrypy(pairing_t &pairing, PP_S *&PP_, SK_S *SK, element_t &M, element_t *&TagList, CT_S *&CT_);
 

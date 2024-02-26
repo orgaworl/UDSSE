@@ -13,37 +13,37 @@
 #include "openssl/tls1.h"
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
-#include"SRE.h"
+#include "SRE.h"
 #include <map>
 #include <vector>
 using namespace std;
 
-
 struct mapValPair
 {
-    MSK_S msk;
+    MSK_S *msk;
     int i;
     vector<element_t> D;
 };
-map<string,mapValPair> MAP;
-element_t K;
-int lambda_;
-int d_;
+map<string, mapValPair> MAP;
 
+#define KEY_LEN_IN_BYTE 32
+char *K;
+char *Kt;
+char *Ks;
+
+int lambda_ = 1024;
+int d_ = 4;
+int b_ = 64;
+int h_ = 4;
 
 #define OP_TYPE bool
 #define OP_ADD 1
 #define OP_DEL 0
 
-
-
-int UDSSE_Setup(pairing_t &pairing,int sfd,int lambda,int d);
-int UDSSE_Search(pairing_t &pairing,int sfd,element_t &omega,int i);
-int UDSSE_Update(pairing_t &pairing,int sfd,OP_TYPE op,char* &omega,element_t& ind);
-int UDSSE_UpdateKey(pairing_t &pairing,int sfd,element_t &omega);
-
-
-
+int UDSSE_Setup(pairing_t &pairing, int sfd, int lambda, int d);
+int UDSSE_Search(pairing_t &pairing, int sfd, char *omega);
+int UDSSE_Update(pairing_t &pairing, int sfd, OP_TYPE op, char *omega, char *ind);
+int UDSSE_UpdateKey(pairing_t &pairing, int sfd, char *omega);
 
 #define HASH_VALUE_LENGTH 32
 #define RESULT_LENGTH 64
