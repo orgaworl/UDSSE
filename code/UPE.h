@@ -188,17 +188,18 @@ int H(element_t &result, element_t &x);
 
 int Hash(element_t &result, unsigned char *str);
 
-void V(pairing_t &pairing, element_t &result, PP_S *&PP_, element_t x, element_t *&xc, long d);
+//void V(pairing_t &pairing, element_t &result, PP_S *&PP_, element_t x, element_t *&xc, long d);
+void V(pairing_t &pairing, element_t &result, PP_S *PP_, element_t x, element_t *&xc, long d);
 
 // 组件
 int UPE_Keygen(pairing_t &pairing, long lambda, long d, PP_S *&PP_, SK_S *&SK0);
 
-int UPE_Encrypy(pairing_t &pairing, PP_S *&PP_, SK_S *SK, element_t &M, element_t *&TagList, CT_S *&CT_);
+int UPE_Encrypy(pairing_t &pairing, PP_S *PP_, SK_S *SK, element_t &M, element_t *&TagList, CT_S *&CT_);
 
-int UPE_Puncture(pairing_t &pairing, PP_S *&PP, SK_S *&SKi_1, element_t &tag);
+int UPE_Puncture(pairing_t &pairing, PP_S *PP, SK_S *&SKi_1, element_t &tag);
 
-int UPE_UPDATE_SK(pairing_t &pairing, PP_S *PP, SK_S *&SK, token *&token_to_send);
+int UPE_UPDATE_SK(pairing_t &pairing, PP_S *PP, SK_S *SK, token *&token_to_send);
 
-int UPE_UPDATE_CT(pairing_t &pairing, PP_S *&PP, CT_S *&CT, token *&token);
+int UPE_UPDATE_CT(pairing_t &pairing, PP_S *PP, CT_S *CT, token *token);
 
-int UPE_Decrypt(pairing_t &pairing, SK_S *&SK, CT_S *&CT_, element_t &M);
+int UPE_Decrypt(pairing_t &pairing, SK_S *SK, CT_S *CT_, element_t &M);

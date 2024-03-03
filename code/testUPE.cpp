@@ -435,11 +435,12 @@ int serverSimulation()
         UPE_Puncture(pairing, PP, SK, puncTag[i]);
       }
       printf("密钥穿刺完成");
+      break;
     }
     default:
     {
       char exit;
-      printf("确定退出?(y/n)\n");
+      printf("\n确定退出?(y/n)\n");
       getchar();
       exit = getchar();
       if (exit == 'y')

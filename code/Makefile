@@ -1,19 +1,34 @@
-UPE:
-	g++ ./UPE.cpp ./testUPE.cpp  -L. -lpbc -lgmp -lssl -lcrypto -o ../prog/main.bin
-	../prog/main.bin
-server: 
-	g++ ./CS.cpp ./testServer.cpp -o ../prog/server.bin
-	../prog/server.bin
-client: 
-	g++ ./CS.cpp ./testClient.cpp -o ../prog/client.bin
-	../prog/client.bin
+# makefile
+prog= ../prog/main.bin
+lib= -L. -lpbc -lgmp -lssl -lcrypto
+ob_PRF= ./PRF.cpp 
+ob_UPE= ./UPE.cpp ./testUPE.cpp
+ob_SRE= ./UPE.cpp ./BloomFilter.cpp ./SRE.cpp ./testSRE.cpp
+ob_client= ./CS.cpp ./testClient.cpp
+ob_server= ./CS.cpp ./testServer.cpp
+ob_DSSE= ./UPE.cpp ./BloomFilter.cpp ./SRE.cpp ./DSSE.cpp ./testDSSE.cpp
+
+
+test:
+	g++ ./test.cpp -o $(prog)
+	$(prog)
 PRF:
-	g++ ./PRF.cpp -o ../prog/PRF.bin -L. -lpbc -lgmp -lssl -lcrypto 
-	echo "\n\n"
-	../prog/PRF.bin
-SRE:
-	g++ ./UPE.cpp ./BloomFilter.cpp ./SRE.cpp ./testSRE.cpp -o ../prog/SRE.bin -L. -lpbc -lgmp -lssl -lcrypto 
-	echo "\n\n"
-	../prog/SRE.bin
+	g++ $(ob_PRF) -o $(prog) $(lib)
+	$(prog)
+UPE:./UPE.cpp ./testUPE.cpp
+	g++  $^ -o $(prog) $(lib)
+	$(prog)
+SRE: 
+	g++  $(ob_SRE) -o $(prog) $(lib)
+	$(prog)
+DSSE:
+	g++  $(ob_DSSE) -o $(prog) $(lib)
+	$(prog)
+server: 
+	g++ $(ob_server) -o $(prog)
+	$(prog)
+client: 
+	g++ $(ob_client) -o $(prog)
+	$(prog)
 clean:
 	rm ../prog/*.bin
