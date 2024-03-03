@@ -1,4 +1,4 @@
-.out
-.gch
+code/*.out
+code/*.gch
 .vscode
-.bin
+prog/*.bin

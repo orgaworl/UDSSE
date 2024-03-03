@@ -25,7 +25,12 @@ int UDSSE_Setup(pairing_t &pairing,int sfd,int lambda,int d)
 }
 int UDSSE_Search(pairing_t &pairing,int sfd,char*omega)
 {
-
+    mapValPair *temp=&(MAP[omega]);
+    
+    if(temp==nullptr)
+    {
+		return -1;
+    }
 
 
 
@@ -83,6 +88,26 @@ int UDSSE_Update(pairing_t &pairing,int sfd,OP_TYPE op,char* &omega,char* ind)
 }
 int UDSSE_UpdateKey(pairing_t &pairing,int sfd,char *omega)
 {
+	mapValPair *temp=&(MAP[omega]);
+    if(temp==nullptr)
+    {
+        SRE_KGen(pairing,temp->msk,lambda_,b_,h_,d_);
+		temp->i=0;
+		temp->D.clear();
+    }
+	token *token;
+	UPE_UPDATE_SK(pairing,temp->msk->pp,temp->msk->sk,token);
+
+
+	//send token
+	unsigned char buf[1024];
+	int len;
+	len=element_to_bytes(buf,token->d_alpha);
+    write(sfd, buf, len);
+	write(sfd, " ", 1);
+	len=element_to_bytes(buf,token->galpha);
+    write(sfd, buf, len);
+
 
 
 }

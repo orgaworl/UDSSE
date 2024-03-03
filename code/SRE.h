@@ -21,12 +21,43 @@ using namespace std;
 
 #define SRE_DEC_FAIL 0
 #define SRE_DEC_SUCCESS 1
-struct MSK_S
+class MSK_S
 {
+public:
     SK_S *sk;
     PP_S *pp;
     H_S *H;
     B_S *B;
+    MSK_S()
+    {
+        sk = NULL;
+        pp = NULL;
+        H = NULL;
+        B = NULL;
+    }
+    ~MSK_S()
+    {
+        if (sk != NULL)
+        {
+            delete sk;
+            sk = NULL;
+        }
+        if (pp != NULL)
+        {
+            delete pp;
+            pp = NULL;
+        }
+        if (H != NULL)
+        {
+            delete H;
+            H = NULL;
+        }
+        if (B != NULL)
+        {
+            delete B;
+            B = NULL;
+        }
+    }
 };
 
 // int SRE_KGen(pairing_t &pairing,int lambda,int b,int h);

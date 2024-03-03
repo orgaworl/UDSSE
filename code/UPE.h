@@ -14,6 +14,8 @@ using namespace std;
 #define DECRYPT_SUCESS 1
 #define DECRYPT_FAIL 0
 
+#define TAG_ZERO 0
+
 class SK_S
 {
 public:
@@ -71,6 +73,7 @@ public:
             delete SKmain[loop];
         }
         delete SKmain;
+        SKmain = NULL;
     }
 };
 class CT_S
@@ -126,7 +129,9 @@ public:
             element_clear(tagList[i]);
         }
         delete[] CT;
+        CT=NULL;
         delete[] tagList;
+        tagList=NULL;
     }
 };
 class PP_S
@@ -160,12 +165,19 @@ public:
             element_clear(PP[i]);
         }
         delete[] PP;
+        PP=NULL;
     }
 };
-struct token
+class token
 {
+    public:
     element_t d_alpha;
     element_t galpha;
+    ~token()
+    {
+        element_clear(d_alpha);
+        element_clear(galpha);
+    }
 };
 
 int l(pairing_t &pairing, element_t &result, element_t x, long j, element_t *&xc, long degree);
@@ -179,7 +191,7 @@ int Hash(element_t &result, unsigned char *str);
 void V(pairing_t &pairing, element_t &result, PP_S *&PP_, element_t x, element_t *&xc, long d);
 
 // 组件
-int UPE_Keygen(pairing_t &pairing, long k, long d, PP_S *&PP_, SK_S *&SK0);
+int UPE_Keygen(pairing_t &pairing, long lambda, long d, PP_S *&PP_, SK_S *&SK0);
 
 int UPE_Encrypy(pairing_t &pairing, PP_S *&PP_, SK_S *SK, element_t &M, element_t *&TagList, CT_S *&CT_);
 

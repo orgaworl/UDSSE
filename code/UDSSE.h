@@ -4,11 +4,21 @@
  * @Date: 2024-02-18 17:11:09
  */
 
-// #include <stdio.h>
+#include <stdio.h>
 // #include <string.h>
 // #include <list>
 // #include <ctime>
-// #include <iostream>
+#include <iostream>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <strings.h>
+#include <string.h>
+#include <ctype.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+
 #include "/usr/local/include/pbc/pbc.h"
 #include "openssl/tls1.h"
 #include <openssl/hmac.h>

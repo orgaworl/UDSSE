@@ -4,7 +4,7 @@
 #include <ctime>
 #include <iostream>
 #include "/usr/local/include/pbc/pbc.h"
-#include"UDSSE.h"
+#include "UPE.h"
 using namespace std;
 
 // FILE *poi = fopen("./output.txt", "w+");
@@ -19,7 +19,7 @@ time_t endT;
 
 // 1.1 初始化双线性对
 pairing_t pairing;
-void INIT()
+void INIT(pairing_t &pairing)
 {
   char param[1024];
   FILE *file = fopen("../param/a.param", "r");
@@ -279,7 +279,6 @@ public:
   }
 };
 
-
 int serverSimulation()
 {
   unsigned char buf[120];
@@ -456,10 +455,18 @@ int serverSimulation()
   return 0;
 }
 
+
+// void test()
+// {
+
+//   // UPE_Keygen(pairing, lambda, d, msk->pp, msk->sk);
+//   UPE_Keygen(pairing, 1, 3, pp, sk);
+// }
 int main(int argc, char const *argv[])
 {
-  INIT();
+  INIT(pairing);
   // test_UPE(4,4,4);
   serverSimulation();
+  //test();
   return 0;
 }

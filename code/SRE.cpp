@@ -11,11 +11,16 @@
 // #define DEFAULT_d 100
 // #define MAX_TAG_NUM 100
 
+PP_S *pp;
+SK_S *sk;
 int SRE_KGen(pairing_t &pairing, MSK_S *&msk, int lambda, int b, int h, int d)
 {
     msk = new MSK_S;
     BF_Gen(b, h, msk->H, msk->B);
-    UPE_Keygen(pairing, lambda, d, msk->pp, msk->sk);
+
+    // UPE_Keygen(pairing, lambda, d, msk->pp, msk->sk);
+    UPE_Keygen(pairing, lambda, d, pp, sk);
+    int temp = pp->d;
     return 0;
 }
 int SRE_Enc(pairing_t &pairing, MSK_S *&msk, element_t &m, element_t *&tagList, CT_S *&ct)

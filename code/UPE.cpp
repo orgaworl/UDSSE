@@ -110,7 +110,8 @@ void V(pairing_t &pairing, element_t &result, PP_S *&PP_, element_t x, element_t
 }
 
 // 组件
-int UPE_Keygen(pairing_t &pairing, long k, long d, PP_S *&PP_, SK_S *&SK0)
+
+int UPE_Keygen(pairing_t &pairing, long lambda, long d, PP_S *&PP_, SK_S *&SK0)
 {
     // k           安全参数
     // d           tag总数
@@ -154,6 +155,11 @@ int UPE_Keygen(pairing_t &pairing, long k, long d, PP_S *&PP_, SK_S *&SK0)
     }
 
     // 3.计算公钥PP
+    // if (PP_ != NULL)
+    // {
+    //     delete PP_;
+    //     PP_ = NULL;
+    // }
     PP_ = new PP_S(d, pairing);
     element_t *PP = PP_->PP;
     // 3.1 PP[0:3]
@@ -173,14 +179,20 @@ int UPE_Keygen(pairing_t &pairing, long k, long d, PP_S *&PP_, SK_S *&SK0)
     }
 
     // 4. 计算私钥SK0
+    if (SK0 != NULL)
+    {
+        delete SK0;
+        SK0 = NULL;
+    }
+
     SK0 = new SK_S(0, pairing);
     element_add(tempZr, alpha, r);
     element_pow_zn(SK0->sk0, PP[2], tempZr); //
 
     // t0为G1单位元
     element_t t0;
-    element_init_G1(t0, pairing);
-    element_set1(t0);
+    element_init_Zr(t0, pairing);
+    element_set_si(t0, TAG_ZERO);
 
     H(tempZr, t0);
     V(pairing, tempG1, PP_, tempZr, xList, d);
@@ -235,6 +247,11 @@ int UPE_Encrypy(pairing_t &pairing, PP_S *&PP_, SK_S *SK, element_t &M, element_
     }
 
     // 1. 计算密文CT=[    ]  ,  其中根据公钥PP可插值计算V(x)
+    // if (CT_ != NULL)
+    // {
+    //     delete CT_;
+    //     CT_ = NULL;
+    // }
     CT_ = new CT_S(d, pairing);
     element_t *CT = CT_->CT;
     // CT[0]
@@ -308,7 +325,6 @@ int UPE_Puncture(pairing_t &pairing, PP_S *&PP, SK_S *&SKi_1, element_t &tag)
         element_init_Zr(xc[i], pairing);
         element_set_si(xc[i], i);
     }
-
     // 1. 计算SK_i=[sk_0',sk_1, ... ,sk_{i-1},sk_i ]
     // 1.1  sk_1, ... ,sk_{i-1}   (深拷贝)
     int i = SKi_1->i + 1;
@@ -404,6 +420,11 @@ int UPE_UPDATE_SK(pairing_t &pairing, PP_S *PP, SK_S *&SK, token *&token_to_send
     }
     cout << "mark2";
     // 2. set token
+    // if (token_to_send != NULL)
+    // {
+    //     delete token_to_send;
+    //     token_to_send = NULL;
+    // }
     token_to_send = new token;
     element_init_Zr(token_to_send->d_alpha, pairing);
     element_set(token_to_send->d_alpha, d_alpha);
