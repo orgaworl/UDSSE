@@ -208,7 +208,7 @@ public:
     for (it = DATABASE.begin(); it != DATABASE.end(); it++)
     {
       ord += 1;
-      printf("%2d. %s\n", ord, it->CT->id);
+      printf("%2d.\n", ord);
     }
     // 选择一项进行删除
     printf("选择删除项\n");
@@ -257,7 +257,7 @@ public:
       {
         waitList[waitNum] = *it;
         waitNum += 1;
-        printf("%2d. %s\n", waitNum, it->CT->id);
+        printf("%2d.\n", waitNum);
       }
     }
 
@@ -347,14 +347,14 @@ int serverSimulation()
       element_from_bytes(M, buf);
       UPE_Encrypy(pairing, PP, SK, M, tagList, CT);
 
-      printf("(3) 请输入内容标识ID:\n");
-      CT->id = new char[32];
-      cin >> CT->id;
+      // printf("(3) 请输入内容标识ID:\n");
+      // CT->id = new char[32];
+      // cin >> CT->id;
       DATABASE.UPEDB_ADD(CT, PP);
 
       system("clear");
       printf("加密后记录:\n");
-      printf("ID: %s\n", CT->id);
+      //printf("ID: %s\n", CT->id);
       for (int i = 0; i < tagNum; i++)
       {
         element_printf("%B\n", CT->CT[i]);

@@ -8,7 +8,9 @@
 // #include <list>
 // #include <ctime>
 // #include <iostream>
+#pragma once
 #include "/usr/local/include/pbc/pbc.h"
+#include <vector>
 #include "UPE.h"
 #include "BloomFilter.h"
 using namespace std;
@@ -16,7 +18,7 @@ using namespace std;
 #define DEFAULT_lambda 1024
 #define DEFAULT_b 1 << 512 // 2**512
 #define DEFAULT_h 5
-#define DEFAULT_d 100
+// #define DEFAULT_d 100
 #define MAX_TAG_NUM 100
 
 #define SRE_DEC_FAIL 0
@@ -34,6 +36,13 @@ public:
         pp = NULL;
         H = NULL;
         B = NULL;
+    }
+    MSK_S(MSK_S &copy)
+    {
+        sk = new SK_S(*(copy.sk));
+        pp = new PP_S(*(copy.pp));
+        H = new H_S(*(copy.H));
+        B = new B_S(*(copy.B));
     }
     ~MSK_S()
     {
@@ -67,4 +76,5 @@ public:
 int SRE_KGen(pairing_t &pairing, MSK_S *msk, int lambda, int b, int h, int d);
 int SRE_Enc(pairing_t &pairing, MSK_S *msk, element_t &m, element_t *&tagList, CT_S *&ct);
 int SRE_KRev(pairing_t &pairing, MSK_S *msk, element_t t[], int tagNum);
-int SRE_Dec(pairing_t &pairing, MSK_S *msk, CT_S *ct, element_t &tag, element_t &m);
+int SRE_KRev(pairing_t &pairing, MSK_S *msk, vector<element_t*> &tagList);
+int SRE_Dec(pairing_t &pairing, MSK_S *msk, CT_S *ct, element_t &m);

@@ -3,7 +3,8 @@
  * @Email: orgaworl@outlook.com
  * @Date: 2024-02-18 17:00:41
  */
-
+//#include<stdio.h>
+#pragma once
 #include "/usr/local/include/pbc/pbc.h"
 #include <openssl/sha.h>
 #include <openssl/md5.h>
@@ -13,7 +14,7 @@ using namespace std;
 
 #define BF_CHECK_TRUE 1
 #define BF_CHECK_FALSE 0
-#define b_MAX_VALUE 1024 * 1024
+#define b_MAX_VALUE 1024*4
 
 #define H_main int *
 #define B_main bitset *
@@ -22,29 +23,45 @@ class H_S
 {
 public:
     int h;
-    H_main main;
+    //H_main main;
 
-    H_S()
+    H_S(int h)
     {
-        h = 0;
-        main = NULL;
+        this->h = h;
+        //main = NULL;
+    }
+    H_S(H_S &copy)
+    {
+        this->h = copy.h;
+        // this->main = new int[h];
+        // for (int i = 0; i < h; i++)
+        //     this->main[i] = copy.main[i];
     }
     ~H_S()
     {
-        if (main != NULL)
-            delete[] main;
+        // if (main != NULL)
+        //     delete[] main;
     }
 };
 
 class B_S
 {
 public:
-    int b;
+    //int b;
     std::bitset<b_MAX_VALUE> *main;
     B_S()
     {
-        b = 0;
+        //b = 0;
         main = NULL;
+    }
+    B_S(B_S &copy)
+    {
+        //b = copy.b;
+        main = new bitset<b_MAX_VALUE>(copy.main);
+    }
+    B_S(bitset<b_MAX_VALUE>copy)
+    {
+        main = new bitset<b_MAX_VALUE>(copy);
     }
     ~B_S()
     {

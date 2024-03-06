@@ -35,28 +35,21 @@ void generateRSAKey(std::string pk, std::string sk)
     char *pub_key = NULL;
 
     // 生成密钥对
-    RSA *keypair = RSA_generate_key(KEY_LENGTH, RSA_3, NULL, NULL);
-
+    RSA *keypair = RSA_generate_key(RSA_KEY_LENGTH, RSA_3, NULL, NULL);
     BIO *pri = BIO_new(BIO_s_mem());
     BIO *pub = BIO_new(BIO_s_mem());
-
     PEM_write_bio_RSAPrivateKey(pri, keypair, NULL, NULL, 0, NULL, NULL);
     PEM_write_bio_RSAPublicKey(pub, keypair);
-
     // 获取长度
     pri_len = BIO_pending(pri);
     pub_len = BIO_pending(pub);
-
     // 密钥对读取到字符串
     pri_key = (char *)malloc(pri_len + 1);
     pub_key = (char *)malloc(pub_len + 1);
-
     BIO_read(pri, pri_key, pri_len);
     BIO_read(pub, pub_key, pub_len);
-
     pri_key[pri_len] = '\0';
     pub_key[pub_len] = '\0';
-
     // 存储密钥对
     pk = pub_key;
     sk = pri_key;
@@ -155,55 +148,55 @@ std::string rsa_pri_decrypt(const std::string &cipherText, const std::string &pr
     return strRet;
 }
 
-int testRSA(int argc, char **argv)
-{
-    // 原始明文
-    std::string srcText = "this is an example";
+// int testRSA(int argc, char **argv)
+// {
+//     // 原始明文
+//     std::string srcText = "this is an example";
 
-    std::string encryptText;
-    std::string encryptHexText;
-    std::string decryptText;
+//     std::string encryptText;
+//     std::string encryptHexText;
+//     std::string decryptText;
 
-    std::cout << "=== 原始明文 ===" << std::endl;
-    std::cout << srcText << std::endl;
+//     std::cout << "=== 原始明文 ===" << std::endl;
+//     std::cout << srcText << std::endl;
 
-    // // md5
-    // std::cout << "=== md5哈希 ===" << std::endl;
-    // md5(srcText, encryptText, encryptHexText);
-    // std::cout << "摘要字符： " << encryptText << std::endl;
-    // std::cout << "摘要串： " << encryptHexText << std::endl;
+//     // // md5
+//     // std::cout << "=== md5哈希 ===" << std::endl;
+//     // md5(srcText, encryptText, encryptHexText);
+//     // std::cout << "摘要字符： " << encryptText << std::endl;
+//     // std::cout << "摘要串： " << encryptHexText << std::endl;
 
-    // // sha256
-    // std::cout << "=== sha256哈希 ===" << std::endl;
-    // sha256(srcText, encryptText, encryptHexText);
-    // std::cout << "摘要字符： " << encryptText << std::endl;
-    // std::cout << "摘要串： " << encryptHexText << std::endl;
+//     // // sha256
+//     // std::cout << "=== sha256哈希 ===" << std::endl;
+//     // sha256(srcText, encryptText, encryptHexText);
+//     // std::cout << "摘要字符： " << encryptText << std::endl;
+//     // std::cout << "摘要串： " << encryptHexText << std::endl;
 
-    // // des
-    // std::cout << "=== des加解密 ===" << std::endl;
-    // std::string desKey = "12345";
-    // encryptText = des_encrypt(srcText, desKey);
-    // std::cout << "加密字符： " << std::endl;
-    // std::cout << encryptText << std::endl;
-    // decryptText = des_decrypt(encryptText, desKey);
-    // std::cout << "解密字符： " << std::endl;
-    // std::cout << decryptText << std::endl;
+//     // // des
+//     // std::cout << "=== des加解密 ===" << std::endl;
+//     // std::string desKey = "12345";
+//     // encryptText = des_encrypt(srcText, desKey);
+//     // std::cout << "加密字符： " << std::endl;
+//     // std::cout << encryptText << std::endl;
+//     // decryptText = des_decrypt(encryptText, desKey);
+//     // std::cout << "解密字符： " << std::endl;
+//     // std::cout << decryptText << std::endl;
 
-    // rsa
-    std::cout << "=== rsa加解密 ===" << std::endl;
-    std::string pk, sk;
-    generateRSAKey(pk, sk);
-    std::cout << "公钥: " << std::endl;
-    std::cout << pk << std::endl;
-    std::cout << "私钥： " << std::endl;
-    std::cout << sk << std::endl;
-    encryptText = rsa_pub_encrypt(srcText, pk);
-    std::cout << "加密字符： " << std::endl;
-    std::cout << encryptText << std::endl;
-    decryptText = rsa_pri_decrypt(encryptText, sk);
-    std::cout << "解密字符： " << std::endl;
-    std::cout << decryptText << std::endl;
+//     // rsa
+//     std::cout << "=== rsa加解密 ===" << std::endl;
+//     std::string pk, sk;
+//     generateRSAKey(pk, sk);
+//     std::cout << "公钥: " << std::endl;
+//     std::cout << pk << std::endl;
+//     std::cout << "私钥： " << std::endl;
+//     std::cout << sk << std::endl;
+//     encryptText = rsa_pub_encrypt(srcText, pk);
+//     std::cout << "加密字符： " << std::endl;
+//     std::cout << encryptText << std::endl;
+//     decryptText = rsa_pri_decrypt(encryptText, sk);
+//     std::cout << "解密字符： " << std::endl;
+//     std::cout << decryptText << std::endl;
 
-    system("pause");
-    return 0;
-}
+//     system("pause");
+//     return 0;
+// }

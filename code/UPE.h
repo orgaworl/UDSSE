@@ -1,4 +1,5 @@
 
+#pragma once
 #include <stdio.h>
 #include <string.h>
 #include <list>
@@ -79,7 +80,7 @@ public:
 class CT_S
 {
 public:
-    char *id;
+    //char *id;
     int d;
     element_t *CT;
     element_t *tagList;
@@ -98,7 +99,7 @@ public:
         {
             element_init_Zr(tagList[i], pairing);
         }
-        id = NULL;
+        //id = NULL;
     }
     CT_S(CT_S *copy, pairing_t &pairing)
     { // 深复制

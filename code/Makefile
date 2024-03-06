@@ -4,9 +4,10 @@ lib= -L. -lpbc -lgmp -lssl -lcrypto
 ob_PRF= ./PRF.cpp 
 ob_UPE= ./UPE.cpp ./testUPE.cpp
 ob_SRE= ./UPE.cpp ./BloomFilter.cpp ./SRE.cpp ./testSRE.cpp
-ob_client= ./CS.cpp ./testClient.cpp
-ob_server= ./CS.cpp ./testServer.cpp
-ob_DSSE= ./UPE.cpp ./BloomFilter.cpp ./SRE.cpp ./DSSE.cpp ./testDSSE.cpp
+ob_UDSSE=  ./UPE.cpp ./BloomFilter.cpp ./PRF.cpp ./RSA.cpp ./SRE.cpp ./UDSSE.cpp 
+ob_client= ./UPE.cpp ./BloomFilter.cpp ./PRF.cpp ./RSA.cpp ./SRE.cpp ./UDSSE.cpp ./CS.cpp ./testClient.cpp
+ob_server= ./UPE.cpp ./BloomFilter.cpp ./PRF.cpp ./RSA.cpp ./SRE.cpp ./UDSSE.cpp ./CS.cpp ./testServer.cpp
+
 
 
 test:
@@ -18,17 +19,25 @@ PRF:
 UPE:./UPE.cpp ./testUPE.cpp
 	g++  $^ -o $(prog) $(lib)
 	$(prog)
-SRE: 
+SRE:
 	g++  $(ob_SRE) -o $(prog) $(lib)
 	$(prog)
-DSSE:
-	g++  $(ob_DSSE) -o $(prog) $(lib)
-	$(prog)
+UDSSE:
+	clear
+	g++  $(ob_UDSSE) -o $(prog) $(lib) -w
+	
 server: 
-	g++ $(ob_server) -o $(prog)
-	$(prog)
+	clear
+	g++ $(ob_server) -o ./server.bin $(lib) -w
+	./server.bin
 client: 
-	g++ $(ob_client) -o $(prog)
-	$(prog)
+	clear
+	g++ $(ob_client) -o ./client.bin $(lib) -w
+	./client.bin
+cs:
+	clear
+	g++ $(ob_server) -o server.bin $(lib) -w
+	g++ $(ob_client) -o client.bin $(lib) -w
+
 clean:
 	rm ../prog/*.bin

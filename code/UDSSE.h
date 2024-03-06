@@ -3,12 +3,14 @@
  * @Email: orgaworl@outlook.com
  * @Date: 2024-02-18 17:11:09
  */
+
+#pragma once
 #include <stdio.h>
-#include <iostream>
-#include <unistd.h>
+// #include <iostream>
+// #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <strings.h>
+// #include <strings.h>
 #include <string.h>
 #include <ctype.h>
 #include <arpa/inet.h>
@@ -20,65 +22,114 @@
 #include <map>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
-#include <openssl/hmac.h>
 #include <openssl/evp.h>
 #include "openssl/tls1.h"
 #include "/usr/local/include/pbc/pbc.h"
+
 #include "SRE.h"
 #include "RSA.h"
+#include "PRF.h"
 using namespace std;
+#define TRANS_BUF_SIZE 1024
 
-class EDB
+// // config
+// int lambda_ = 1024;
+// int b_ = 64;
+// int h_ = 4;
+
+// EDB & EDB_cache
+class EDB_ENTRY
 {
-private:
 public:
-    EDB() {}
-};
+    // element_t tag;
+    std::string e;
 
-struct mapValPair
+    EDB_ENTRY()
+    {
+        e.clear();
+    }
+};
+#define EDB map<std::string, EDB_ENTRY*> // UT -> Entry
+// Local DB
+class LDB_ENTRY
 {
-    int c; //update times
+public:
+    int c; // update times
     MSK_S *msk;
-    vector<element_t>*D;
+    vector<element_t*> D;
+    std::string ST;
+    LDB_ENTRY()
+    {
+        c = 0;
+        msk = NULL;
+        D.clear();
+        ST.clear();
+    }
+    // LDB_ENTRY(LDB_ENTRY const &copy)
+    // {
+    //     c = copy.c;
+    //     msk = new MSK_S(*copy.msk);
+    //     D = copy.D;
+    //     ST = copy.ST;
+    // }
+    ~LDB_ENTRY()
+    {
+        delete msk;
+    }
 };
-map<string, mapValPair> MAP;
+#define LDB map<std::string, LDB_ENTRY*> // omega -> Entry
 
-#define KEY_LEN_IN_BYTE 32
-char *K;
-char *Kt;
-char *Ks;
+// EDB edb;
+// EDB edb_cache;
+// LDB ldb;
 
-int lambda_ = 1024;
-int d_ = 4;
-int b_ = 64;
-int h_ = 4;
+// K
+#define KEY_LEN 32
+#define ST_LEN 32
+#define UT_LEN 32
 
+// string Kt;
+// string Ks;
 
-// UPDATE OP DEFINE
+// // RSA
+// string sk;
+// string pk;
+
+// UPDATE OP define
 #define OP_TYPE bool
 #define OP_ADD 1
 #define OP_DEL 0
-// PRF DEFINE
-#define HASH_VALUE_LENGTH 32
-#define RESULT_LENGTH 64
-// HMAC DEFINE
-#define MD5_HASH_LENGTH 16
-#define SHA256_HASH_LENGTH 32
-#define HMAC_MD5_HASH_LENGTH 16
-#define HMAC_SHA256_HASH_LENGTH 32
+
+// HASH function define
+#define HASH1_LENGTH MD5_HASH_LENGTH
+#define HASH2_LENGTH SHA256_HASH_LENGTH
+
 
 // UDSSE FUNCTION
 int UDSSE_Setup_Client(pairing_t &pairing, int sfd, int lambda, int d);
-int UDSSE_Search_Client(pairing_t &pairing, int sfd, char *omega);
-int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, char *omega, char *ind);
-int UDSSE_UpdateKey_Client(pairing_t &pairing, int sfd, char *omega);
+int UDSSE_Setup_Server(pairing_t &pairing, int sfd);
+int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega);
+int UDSSE_Search_Server(pairing_t &pairing, int sfd);
+int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, string ind);
+int UDSSE_Update_Server(pairing_t &pairing, int sfd);
+
+int UDSSE_UpdateKey_Client(pairing_t &pairing, int sfd);
+int UDSSE_UpdateKey_Server(pairing_t &pairing, int sfd);
 
 
 
-// COMPONENT
-int PRF(unsigned char *result, char *Key, int KeyLen, char *seed, int seedLen);
-int hmac(unsigned char *md_value, const char *algorithm, unsigned char *msg, size_t msgLen, unsigned char *key, size_t keyLen);
 
 
-int HMAC_SHA256(std::string &Komega, std::string &ST, std::string &UT);
-int HMAC_MD5(std::string &Komega, std::string &ST, std::string &stream);
+string SK2Bytes(SK_S *sk);
+string PP2Bytes(PP_S *pp);
+string H2Bytes(H_S *h);
+string B2Bytes(B_S *b);
+string MSK2Bytes(MSK_S *msk);
+string CT2Bytes(CT_S *ct);
+
+SK_S *Bytes2SK(pairing_t &pairing, char *bytes);
+PP_S *Bytes2PP(pairing_t &pairing, char *bytes);
+H_S *Bytes2H(char *bytes);
+B_S *Bytes2B(char *bytes);
+MSK_S *Bytes2MSK(pairing_t &pairing, char *bytes);
+CT_S *Bytes2CT(pairing_t &pairing, string bytes);

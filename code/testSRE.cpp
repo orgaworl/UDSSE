@@ -32,8 +32,8 @@ int main()
     unsigned char *decryptResult = new unsigned char[128];
 
     int b = 1024;
-    int h = 4;
-    int d = 10;
+    int h = 2;
+    int d = 1;
     int lambda = 1024;
     CT_S *CT;
     MSK_S *MSK = new MSK_S;
@@ -53,7 +53,7 @@ int main()
     for (int loop = 0; loop < puncTimes; loop++)
     {
         element_init_Zr(puncTags[loop], pairing);
-        element_set_si(puncTags[loop], loop + 10+d-1);
+        element_set_si(puncTags[loop], loop + 10+d);
     }
 
     // 2.生成MSK
@@ -77,7 +77,7 @@ int main()
     element_t notPuncTag;
     element_init_Zr(notPuncTag, pairing);
     element_set_si(notPuncTag, 1025);
-    int mark=SRE_Dec(pairing, MSK, CT, notPuncTag, plain);
+    int mark=SRE_Dec(pairing, MSK, CT,plain);
     if(mark==SRE_DEC_FAIL)
     {
         printf("Punctured tag !\n");
