@@ -65,6 +65,8 @@ public:
     {
         c = 0;
         msk = NULL;
+        D.clear();
+        ST.clear();
     }
     // LDB_ENTRY(LDB_ENTRY const &copy)
     // {
@@ -101,9 +103,35 @@ public:
 #define OP_ADD 1
 #define OP_DEL 0
 
+// return value
+#define UDSSE_Setup_Client_Sucess 1
+#define UDSSE_Setup_Client_Fail -1
+#define UDSSE_Setup_Server_Sucess 1
+#define UDSSE_Setup_Server_Fail -1
+
+#define UDSSE_Search_Client_Sucess 1
+#define UDSSE_Search_Client_Fail -1
+#define UDSSE_Search_Server_Sucess 1
+#define UDSSE_Search_Server_Fail -1
+
+#define UDSSE_Update_Client_Sucess 1
+#define UDSSE_Update_Client_Fail -1
+#define UDSSE_Update_Server_Sucess 1
+#define UDSSE_Update_Server_Fail -1
+
+#define UDSSE_UpdateKey_Client_Sucess 1
+#define UDSSE_UpdateKey_Client_Fail -1
+#define UDSSE_UpdateKey_Server_Sucess 1
+#define UDSSE_UpdateKey_Server_Fail -1
+
+// encode or decode result value
+#define DECODE_FAIL NULL
+#define ENCODE_FAIL ""
+
+
 // HASH function define
-#define HASH1_LENGTH MD5_HASH_LENGTH
-#define HASH2_LENGTH SHA256_HASH_LENGTH
+#define HASH1_LENGTH SHA256_HASH_LENGTH
+#define HASH2_LENGTH MD5_HASH_LENGTH
 
 
 // UDSSE FUNCTION

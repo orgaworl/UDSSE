@@ -34,15 +34,8 @@ int main()
     INIT(pairing);
     int lambda = 1024;
     int d = 1;
-    // char buf[10]="hello";
-    // buf[5]=0;
-    // buf[6]='k';
-    // string str(buf,10);
-    // for(int i=0;i<10;i++)
-    // {
-    //     cout<<str[i]<<" ";
-    // }
-    // cout<<endl<<str.length()<<endl;
+
+    int mark = 0;
 
     printf("setup\n");
     UDSSE_Setup_Client(pairing, 0, lambda, d);
@@ -60,13 +53,40 @@ int main()
     UDSSE_Update_Client(pairing, 0, OP_ADD, "key1234567", "987654321");
     UDSSE_Update_Server(pairing, 0);
 
+    printf("update\n");
+    UDSSE_Update_Client(pairing, 0, OP_ADD, "key1234567", "test");
+    UDSSE_Update_Server(pairing, 0);
+
     // printf("update\n");
-    // UDSSE_Update_Client(pairing,0,OP_ADD,"key09876","A1B2C3");
-    // UDSSE_Update_Server(pairing,0);
+    // UDSSE_Update_Client(pairing, 0, OP_ADD, "key09876", "A1B2C3");
+    // UDSSE_Update_Server(pairing, 0);
+
+    // printf("update\n");
+    // UDSSE_Update_Client(pairing, 0, OP_ADD, "key09876", "12341");
+    // UDSSE_Update_Server(pairing, 0);
 
     printf("search\n");
-    UDSSE_Search_Client(pairing, 0, "key1234567");
-    UDSSE_Search_Server(pairing, 0);
+    mark = UDSSE_Search_Client(pairing, 0, "key1234567");
+    if (mark == UDSSE_Search_Client_Sucess)
+    {
+        UDSSE_Search_Server(pairing, 0);
+    }
+
+    // printf("search\n");
+    // mark = UDSSE_Search_Client(pairing, 0, "key09876");
+    // if (mark == UDSSE_Search_Client_Sucess)
+    // {
+    //     UDSSE_Search_Server(pairing, 0);
+    // }
+
+
+
+    // printf("search\n");
+    // mark = UDSSE_Search_Client(pairing, 0, "testf");
+    // if (mark == UDSSE_Search_Client_Sucess)
+    // {
+    //     UDSSE_Search_Server(pairing, 0);
+    // }
 
     return 0;
 }

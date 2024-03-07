@@ -61,7 +61,7 @@ void generateRSAKey(std::string &pk, std::string &sk)
 // openssl genrsa -out prikey.pem 1024
 // openssl rsa - in privkey.pem - pubout - out pubkey.pem
 
-// 公钥加密
+
 std::string rsa_pub_encrypt(const std::string &clearText, const std::string &pubKey)
 {
     std::string strRet;
@@ -79,10 +79,26 @@ std::string rsa_pub_encrypt(const std::string &clearText, const std::string &pub
     memset(encryptedText, 0, len + 1);
 
     // 加密函数
-    int ret = RSA_public_encrypt(clearText.length(), (const unsigned char *)clearText.c_str(), (unsigned char *)encryptedText, rsa, RSA_PKCS1_PADDING);
+    // RSA_public_encrypt(clearText.length(), (const unsigned char *)clearText.c_str(), (unsigned char *)encryptedText,rsa,RSA_PADDING);
+    if (clearText.length() >= RSA_KEY_LENGTH / 8)
+    {
+        printf("rsa input overflow. \n");
+    }
+    int ret = RSA_public_encrypt(
+        clearText.length(),
+        (const unsigned char *)clearText.c_str(),
+        (unsigned char *)encryptedText,
+        rsa,
+        RSA_PKCS1_PADDING);
+        // RSA_NO_PADDING);
     if (ret >= 0)
+    {
         strRet = std::string(encryptedText, ret);
-
+    }
+    else
+    {
+        strRet = "";
+    }
     // 释放内存
     free(encryptedText);
     BIO_free_all(keybio);
@@ -90,8 +106,6 @@ std::string rsa_pub_encrypt(const std::string &clearText, const std::string &pub
 
     return strRet;
 }
-
-// 私钥解密
 std::string rsa_pri_decrypt(const std::string &cipherText, const std::string &priKey)
 {
     std::string strRet;
@@ -110,10 +124,16 @@ std::string rsa_pri_decrypt(const std::string &cipherText, const std::string &pr
     memset(decryptedText, 0, len + 1);
 
     // 解密函数
-    int ret = RSA_private_decrypt(cipherText.length(), (const unsigned char *)cipherText.c_str(), (unsigned char *)decryptedText, rsa, RSA_PKCS1_PADDING);
+    int ret = RSA_private_decrypt(cipherText.length(),
+                                  (const unsigned char *)cipherText.c_str(),
+                                  (unsigned char *)decryptedText,
+                                  rsa,
+                                  RSA_PKCS1_PADDING);
+    // RSA_NO_PADDING);
     if (ret >= 0)
         strRet = std::string(decryptedText, ret);
-
+    else
+        strRet = "";
     // 释放内存
     free(decryptedText);
     BIO_free_all(keybio);
@@ -121,6 +141,7 @@ std::string rsa_pri_decrypt(const std::string &cipherText, const std::string &pr
 
     return strRet;
 }
+
 
 int testRSA()
 {
@@ -138,10 +159,10 @@ int testRSA()
     std::cout << "=== rsa加解密 ===" << std::endl;
     std::string pk, sk;
     generateRSAKey(pk, sk);
-    // std::cout << "公钥: " << std::endl;
-    // std::cout << pk << std::endl;
-    // std::cout << "私钥： " << std::endl;
-    // std::cout << sk << std::endl;
+    std::cout << "公钥: " << std::endl;
+    std::cout << pk << std::endl;
+    std::cout << "私钥： " << std::endl;
+    std::cout << sk << std::endl;
     // encryptText = rsa_pub_encrypt(srcText, pk);
     // std::cout << "加密字符： " << std::endl;
     // std::cout << encryptText << std::endl;
@@ -186,3 +207,166 @@ int testRSA()
     system("pause");
     return 0;
 }
+
+
+std::string RsaPubEncrypt(const std::string &clear_text, const std::string &pub_key)
+{
+    std::string encrypt_text;
+    BIO *keybio = BIO_new_mem_buf((unsigned char *)pub_key.c_str(), -1);
+    RSA* rsa = RSA_new();
+    // 注意-----第1种格式的公钥
+    rsa = PEM_read_bio_RSAPublicKey(keybio, &rsa, NULL, NULL);
+    // 注意-----第2种格式的公钥（这里以第二种格式为例）
+    //rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa, NULL, NULL);
+ 
+    // 获取RSA单次可以处理的数据块的最大长度
+    int key_len = RSA_size(rsa);
+    int block_len = key_len - 11;    // 因为填充方式为RSA_PKCS1_PADDING, 所以要在key_len基础上减去11
+ 
+    // 申请内存：存贮加密后的密文数据
+    char *sub_text = new char[key_len + 1];
+    memset(sub_text, 0, key_len + 1);
+    int ret = 0;
+    int pos = 0;
+    std::string sub_str;
+    // 对数据进行分段加密（返回值是加密后数据的长度）
+    while (pos < clear_text.length()) {
+        sub_str = clear_text.substr(pos, block_len);
+        memset(sub_text, 0, key_len + 1);
+        ret = RSA_public_encrypt(sub_str.length(), (const unsigned char*)sub_str.c_str(), (unsigned char*)sub_text, rsa, RSA_PKCS1_PADDING);
+        if (ret >= 0) {
+            encrypt_text.append(std::string(sub_text, ret));
+        }
+        pos += block_len;
+    }
+    
+    // 释放内存  
+    BIO_free_all(keybio);
+    RSA_free(rsa);
+    delete[] sub_text;
+ 
+    return encrypt_text;
+}
+std::string RsaPriDecrypt(const std::string &cipher_text, const std::string &pri_key)
+{
+    std::string decrypt_text;
+    RSA *rsa = RSA_new();
+    BIO *keybio;
+    keybio = BIO_new_mem_buf((unsigned char *)pri_key.c_str(), -1);
+ 
+    rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa, NULL, NULL);
+    if (rsa == nullptr) {
+
+        return std::string();
+    }
+ 
+    // 获取RSA单次处理的最大长度
+    int key_len = RSA_size(rsa);
+    char *sub_text = new char[key_len + 1];
+    memset(sub_text, 0, key_len + 1);
+    int ret = 0;
+    std::string sub_str;
+    int pos = 0;
+    // 对密文进行分段解密
+    while (pos < cipher_text.length()) {
+        sub_str = cipher_text.substr(pos, key_len);
+        memset(sub_text, 0, key_len + 1);
+        ret = RSA_private_decrypt(sub_str.length(), (const unsigned char*)sub_str.c_str(), (unsigned char*)sub_text, rsa, RSA_PKCS1_PADDING);
+        if (ret >= 0) {
+            decrypt_text.append(std::string(sub_text, ret));
+            printf("pos:%d, sub: %s\n", pos, sub_text);
+            pos += key_len;
+        }
+    }
+    // 释放内存  
+    delete[] sub_text;
+    BIO_free_all(keybio);
+    RSA_free(rsa);
+ 
+    return decrypt_text;
+}
+
+
+std::string RsaPriEncrypt(const std::string &clear_text, std::string &pri_key)
+{
+    std::string encrypt_text;
+    BIO *keybio = BIO_new_mem_buf((unsigned char *)pri_key.c_str(), -1);
+    RSA* rsa = RSA_new();
+    rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa, NULL, NULL);
+    if (!rsa)
+    {
+        BIO_free_all(keybio);
+        return std::string("");
+    }
+ 
+    // 获取RSA单次可以处理的数据块的最大长度
+    int key_len = RSA_size(rsa);
+    int block_len = key_len - 11;    // 因为填充方式为RSA_PKCS1_PADDING, 所以要在key_len基础上减去11
+ 
+    // 申请内存：存贮加密后的密文数据
+    char *sub_text = new char[key_len + 1];
+    memset(sub_text, 0, key_len + 1);
+    int ret = 0;
+    int pos = 0;
+    std::string sub_str;
+    // 对数据进行分段加密（返回值是加密后数据的长度）
+    while (pos < clear_text.length()) {
+        sub_str = clear_text.substr(pos, block_len);
+        memset(sub_text, 0, key_len + 1);
+        ret = RSA_private_encrypt(sub_str.length(), (const unsigned char*)sub_str.c_str(), (unsigned char*)sub_text, rsa, RSA_PKCS1_PADDING);
+        if (ret >= 0) {
+            encrypt_text.append(std::string(sub_text, ret));
+        }
+        pos += block_len;
+    }
+    
+    // 释放内存  
+    delete sub_text;
+    BIO_free_all(keybio);
+    RSA_free(rsa);
+ 
+    return encrypt_text;
+}
+std::string RsaPubDecrypt(const std::string & cipher_text, const std::string & pub_key)
+{
+    std::string decrypt_text;
+    BIO *keybio = BIO_new_mem_buf((unsigned char *)pub_key.c_str(), -1);
+    RSA* rsa = RSA_new();
+    
+    // 注意-------使用第1种格式的公钥进行解密
+    rsa = PEM_read_bio_RSAPublicKey(keybio, &rsa, NULL, NULL);
+    // 注意-------使用第2种格式的公钥进行解密（我们使用这种格式作为示例）
+    // rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa, NULL, NULL);
+    if (!rsa)
+    {
+        return decrypt_text;
+    }
+ 
+    // 获取RSA单次处理的最大长度
+    int len = RSA_size(rsa);
+    char *sub_text = new char[len + 1];
+    memset(sub_text, 0, len + 1);
+    int ret = 0;
+    std::string sub_str;
+    int pos = 0;
+    // 对密文进行分段解密
+    while (pos < cipher_text.length()) {
+        sub_str = cipher_text.substr(pos, len);
+        memset(sub_text, 0, len + 1);
+        ret = RSA_public_decrypt(sub_str.length(), (const unsigned char*)sub_str.c_str(), (unsigned char*)sub_text, rsa, RSA_PKCS1_PADDING);
+        if (ret >= 0) {
+            decrypt_text.append(std::string(sub_text, ret));
+            // printf("pos:%d, sub: %s\n", pos, sub_text);
+            pos += len;
+        }
+    }
+ 
+    // 释放内存  
+    delete sub_text;
+    BIO_free_all(keybio);
+    RSA_free(rsa);
+ 
+    return decrypt_text;
+}
+
+

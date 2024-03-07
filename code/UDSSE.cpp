@@ -54,8 +54,8 @@ void printMSK(MSK_S *mskR)
 void printStr(string str)
 {
 	cout << "----------------STR BYTE----------------\n";
-	for (int i = 0; i < str.size(); i++)
-		cout << hex << (int)(unsigned char)str[i];
+	for (int i = 0; i < str.capacity(); i++)
+		cout << hex << (int)(unsigned char)str[i] << " ";
 	printf("\n");
 	cout << "--------------------------------\n";
 }
@@ -110,7 +110,7 @@ int UDSSE_Setup_Client(pairing_t &pairing, int sfd, int lambda, int d)
 	send(sfd, buf, pk.size(), 0);
 #endif
 
-	return 0;
+	return UDSSE_Setup_Client_Sucess;
 }
 int UDSSE_Setup_Server(pairing_t &pairing, int sfd)
 {
@@ -126,16 +126,18 @@ int UDSSE_Setup_Server(pairing_t &pairing, int sfd)
 	int lenSum = *(int *)buf;
 	pk = string(buf + 4, lenSum);
 
-	return 0;
+	return UDSSE_Setup_Server_Sucess;
 }
 
 // Search Part
 int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega)
 {
+	printf("SEARCH: client look up local secret key over key word:\n (((%s))) .\n", omega.c_str());
 	// A.
 	if (ldb.count(omega) == 0)
 	{
-		return -1;
+		printf("SEARCH: fail !.\n");
+		return UDSSE_Search_Client_Fail;
 	}
 	MSK_S *mskR = new MSK_S(ldb[omega]->msk, pairing);
 	SRE_KRev(pairing, mskR, ldb[omega]->D);
@@ -149,7 +151,7 @@ int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega)
 	int c = ldb[omega]->c;
 	string ST = ldb[omega]->ST;
 
-	printf("SEARCH: client send data to the server \n");
+	printf("SEARCH: client send search query to the server \n");
 	// B. send (msk_R,Komega/tkn,ST,c) to server
 	char buf[TRANS_BUF_SIZE];
 	char *poi = buf + 4;
@@ -194,7 +196,7 @@ int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega)
 	send(sfd, buf, TRANS_BUF_SIZE, 0);
 #endif
 	printf("SEARCH: client finish sending \n");
-	return 0;
+	return UDSSE_Search_Client_Sucess;
 }
 
 int UDSSE_Search_Server(pairing_t &pairing, int sfd)
@@ -264,28 +266,29 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 
 		string UT = HMAC_SHA256(Komega, ST);
 		string stream = HMAC_MD5(Komega, ST);
-#ifdef PRINT
-		printf("ST:\n");
-		printStr(ST);
-		printf("\n");
-		printf("UT:\n");
-		printStr(UT);
-		printf("\n");
-		printf("stram:\n");
-		printStr(stream);
-		printf("\n");
-#endif
+		#ifdef PRINT
+				printf("ST:\n");
+				printStr(ST);
+				printf("\n");
+				// printf("UT:\n");
+				// printStr(UT);
+				// printf("\n");
+				printf("stream:\n");
+				printStr(stream);
+				printf("\n");
+		#endif
 		if (edb.count(UT) == 0)
 		{
 			continue;
 		}
 
 		string plain(edb[UT]->e);
-		// len = plain.length();
-		// for (int i = 0; i < len; i++)
-		// {
-		// 	plain[i] = plain[i] ^ stream[i % HASH2_LENGTH];
-		// }
+		len = plain.length();
+		//-------------------------------------------------------------
+				for (int i = 0; i < len; i++)
+				{
+					plain[i] = plain[i] ^ stream[i % HASH2_LENGTH];
+				}
 		// #ifdef PRINT
 		// 		printf("plain:\n");
 		// 		for (int i = 0; i < plain.length(); i++)
@@ -294,9 +297,16 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 		// 		}
 		// 		printf("\n");
 		// #endif
+		//-------------------------------------------------------------
 		Res_plain.push_back(plain);
-		ST = rsa_pub_encrypt(ST, pk);
-		//ST = rsa_pri_decrypt(ST, sk); 
+		// ST = rsa_pub_encrypt(ST, pk);
+		if (i != c)
+		{
+			ST = RsaPubDecrypt(ST, pk);
+		}
+
+		// ST = rsa_pri_decrypt(ST, sk);
+		// ST = rsa_pri_decrypt(ST, sk);
 	}
 	// #ifdef PRINT
 	// 	cout << "entry num on the keyword:" << Res_plain.size() << endl;
@@ -355,7 +365,7 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 #endif
 
 	printf("SEARCH: server ends. \n");
-	return 0;
+	return UDSSE_Search_Client_Sucess;
 }
 
 //  Update Part
@@ -384,12 +394,12 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 	if (op == OP_DEL)
 	{
 		ldb[omega]->D.push_back(&tag);
-		return 0;
+		return UDSSE_Update_Client_Sucess;
 	}
 	else if (op != OP_ADD && op != OP_DEL)
 	{
 		printf("NOT SUPPORTED OPERATION ! ");
-		return -1;
+		return UDSSE_Update_Client_Fail;
 	}
 
 	// ADD OP
@@ -404,64 +414,70 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 		element_t plain;
 		element_init_GT(plain, pairing);
 		int plainLen = element_from_bytes(plain, (unsigned char *)ind_128B.c_str());
-		// #ifdef PRINT
-		// 		printf("ind in element:\n");
-		// 		element_out_str(stdout, 16, plain);
-		// 		printf("\n");
-		// #endif
 		CT_S *ct;
 		SRE_Enc(pairing, ldb[omega]->msk, plain, tagList, ct);
-		// #ifdef PRINT
-		// 		printCT(ct);
-		// #endif
 		// CT_S --> bytes
 		string bytes = CT2Bytes(ct);
 
 		// RSA sk decry: bytes --> bytes
+		string ST;
 		std::string Komega = PRF(Ks, omega);
-		if (ldb[omega]->ST.length() == 0) // 若ST为空
+		if (ldb[omega]->ST.size() == 0) // 若ST为空
 		{
 			char buf[ST_LEN];
 			for (int i = 0; i < ST_LEN; i++)
 			{
 				buf[i] = rand();
 			}
-			ldb[omega]->c = 0;	  // c
-			ldb[omega]->ST = buf; // ST
+			ldb[omega]->c = 0;					  // c
+			ldb[omega]->ST = string(buf, ST_LEN); // ST
 			printf("rand ST\n");
 		}
 		else
 		{
 			printf("gene ST\n");
 			ldb[omega]->c += 1;
-			ldb[omega]->ST = rsa_pri_decrypt(ldb[omega]->ST, sk);
-			// ldb[omega]->ST = rsa_pub_encrypt(ldb[omega]->ST, sk);
-		}
+			// ldb[omega]->ST = rsa_pri_decrypt(ldb[omega]->ST, sk);
 
-		std::string ST = ldb[omega]->ST;
+			// ST = rsa_pub_encrypt(ldb[omega]->ST, pk);
+			// ldb[omega]->ST = rsa_pub_encrypt(ldb[omega]->ST, sk);
+			ST = RsaPriEncrypt(ldb[omega]->ST, sk);
+			if (ST == "")
+			{
+				printf(" **** rsa encry error **** \n");
+			}
+			else
+			{
+				ldb[omega]->ST = ST;
+			}
+		}
+		ST = ldb[omega]->ST;
 		std::string UT = HMAC_SHA256(Komega, ST);
 		std::string stream = HMAC_MD5(Komega, ST);
-#ifdef PRINT
-		printf("%s\n",(char*)omega.c_str());
-		printStr(ST);
-		printf("\n");
-		// printf("UT:\n");
-		// printStr(UT);
-		// printf("\n");
-		// printf("stram:\n");
-		// printStr(stream);
-		// printf("\n");
-#endif
+		#ifdef PRINT
+				// printf("%s\n", (char *)omega.c_str());
+				printStr(ST);
+				printf("\n");
+				// printf("UT:\n");
+				// printStr(UT);
+				// printf("\n");
+				printf("stram:\n");
+				printStr(stream);
+				printf("\n");
+		#endif
 		int len = bytes.length();
 		std::string e(len, '\0');
-		// for (int i = 0; i < len; i++)
-		// {
-		// 	e[i] = bytes[i] ^ stream[i % HASH2_LENGTH];
-		// }
+		//-------------------------------------------------------------
 		for (int i = 0; i < len; i++)
 		{
-			e[i] = bytes[i];
+			e[i] = bytes[i] ^ stream[i % HASH2_LENGTH];
 		}
+		// for (int i = 0; i < len; i++)
+		// {
+		// 	e[i] = bytes[i];
+		// }
+		//-------------------------------------------------------------
+
 
 		// B. send UT and e
 		char buf[TRANS_BUF_SIZE];
@@ -483,7 +499,6 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 		//
 		int lenSum = poi - buf;
 		*(int *)buf = lenSum;
-		// *buf = 0;
 
 #ifdef OFFLINE
 		memcpy(gbuf, buf, lenSum);
@@ -492,7 +507,7 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 		send(sfd, buf, TRANS_BUF_SIZE, 0);
 #endif
 	}
-	return 0;
+	return UDSSE_Update_Client_Sucess;
 }
 
 int UDSSE_Update_Server(pairing_t &pairing, int sfd)
@@ -526,6 +541,7 @@ int UDSSE_Update_Server(pairing_t &pairing, int sfd)
 	if (lenSum != poi - buf)
 	{
 		printf("error decode in update\n");
+		return UDSSE_Update_Server_Fail;
 	}
 	// #ifdef PRINT
 	// #endif
@@ -535,7 +551,7 @@ int UDSSE_Update_Server(pairing_t &pairing, int sfd)
 		edb[UT] = new EDB_ENTRY();
 	}
 	edb[UT]->e = e;
-	return 0;
+	return UDSSE_Update_Server_Sucess;
 }
 
 // Update Key Part
@@ -642,7 +658,7 @@ SK_S *Bytes2SK(pairing_t &pairing, char *bytes)
 			if (test != len)
 			{
 				printf("******** decode error*************\n");
-				return 0;
+				return DECODE_FAIL;
 			}
 		}
 	}
