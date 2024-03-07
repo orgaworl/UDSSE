@@ -14,7 +14,7 @@ using namespace std;
 
 #define BF_CHECK_TRUE 1
 #define BF_CHECK_FALSE 0
-#define b_MAX_VALUE 1024*4
+#define b_MAX_VALUE 1024
 
 #define H_main int *
 #define B_main bitset *
@@ -30,9 +30,9 @@ public:
         this->h = h;
         //main = NULL;
     }
-    H_S(H_S &copy)
+    H_S(H_S *copy)
     {
-        this->h = copy.h;
+        this->h = copy->h;
         // this->main = new int[h];
         // for (int i = 0; i < h; i++)
         //     this->main[i] = copy.main[i];
@@ -54,12 +54,12 @@ public:
         //b = 0;
         main = NULL;
     }
-    B_S(B_S &copy)
+    B_S(B_S *copy)
     {
         //b = copy.b;
-        main = new bitset<b_MAX_VALUE>(copy.main);
+        main = new bitset<b_MAX_VALUE>(copy->main);
     }
-    B_S(bitset<b_MAX_VALUE>copy)
+    B_S(bitset<b_MAX_VALUE>&copy)
     {
         main = new bitset<b_MAX_VALUE>(copy);
     }

@@ -1,32 +1,6 @@
-#include"RSA.h"
+#include "RSA.h"
 
-
-// int RSA_KeyGen()
-// {
-
-//     RSA *r;
-//     int bits = 512, ret;
-//     unsigned long e = RSA_3;
-//     BIGNUM *bne;
-//     r = RSA_generate_key(bits, e, NULL, NULL);
-//     RSA_print_fp(stdout, r, 11);
-//     RSA_free(r);
-//     bne = BN_new();
-//     ret = BN_set_word(bne, e);
-//     r = RSA_new();
-//     ret = RSA_generate_key_ex(r, bits, bne, NULL);
-//     if (ret != 1)
-//     {
-//         printf("RSA_generate_key_ex err!\n");
-//         return -1;
-//     }
-
-//     RSA_free(r);
-
-//     return 0;
-// }
-
-void generateRSAKey(std::string pk, std::string sk)
+void generateRSAKey(std::string &pk, std::string &sk)
 {
     // 公私密钥对
     size_t pri_len;
@@ -148,55 +122,67 @@ std::string rsa_pri_decrypt(const std::string &cipherText, const std::string &pr
     return strRet;
 }
 
-// int testRSA(int argc, char **argv)
-// {
-//     // 原始明文
-//     std::string srcText = "this is an example";
+int testRSA()
+{
+    // 原始明文
+    std::string srcText = "this is an example";
 
-//     std::string encryptText;
-//     std::string encryptHexText;
-//     std::string decryptText;
+    std::string encryptText;
+    std::string encryptHexText;
+    std::string decryptText;
 
-//     std::cout << "=== 原始明文 ===" << std::endl;
-//     std::cout << srcText << std::endl;
+    std::cout << "=== 原始明文 ===" << std::endl;
+    std::cout << srcText << std::endl;
 
-//     // // md5
-//     // std::cout << "=== md5哈希 ===" << std::endl;
-//     // md5(srcText, encryptText, encryptHexText);
-//     // std::cout << "摘要字符： " << encryptText << std::endl;
-//     // std::cout << "摘要串： " << encryptHexText << std::endl;
+    // // rsa
+    std::cout << "=== rsa加解密 ===" << std::endl;
+    std::string pk, sk;
+    generateRSAKey(pk, sk);
+    // std::cout << "公钥: " << std::endl;
+    // std::cout << pk << std::endl;
+    // std::cout << "私钥： " << std::endl;
+    // std::cout << sk << std::endl;
+    // encryptText = rsa_pub_encrypt(srcText, pk);
+    // std::cout << "加密字符： " << std::endl;
+    // std::cout << encryptText << std::endl;
+    // decryptText = rsa_pri_decrypt(encryptText, sk);
+    // std::cout << "解密字符： " << std::endl;
+    // std::cout << decryptText << std::endl;
 
-//     // // sha256
-//     // std::cout << "=== sha256哈希 ===" << std::endl;
-//     // sha256(srcText, encryptText, encryptHexText);
-//     // std::cout << "摘要字符： " << encryptText << std::endl;
-//     // std::cout << "摘要串： " << encryptHexText << std::endl;
-
-//     // // des
-//     // std::cout << "=== des加解密 ===" << std::endl;
-//     // std::string desKey = "12345";
-//     // encryptText = des_encrypt(srcText, desKey);
-//     // std::cout << "加密字符： " << std::endl;
-//     // std::cout << encryptText << std::endl;
-//     // decryptText = des_decrypt(encryptText, desKey);
-//     // std::cout << "解密字符： " << std::endl;
-//     // std::cout << decryptText << std::endl;
-
-//     // rsa
-//     std::cout << "=== rsa加解密 ===" << std::endl;
-//     std::string pk, sk;
-//     generateRSAKey(pk, sk);
-//     std::cout << "公钥: " << std::endl;
-//     std::cout << pk << std::endl;
-//     std::cout << "私钥： " << std::endl;
-//     std::cout << sk << std::endl;
-//     encryptText = rsa_pub_encrypt(srcText, pk);
-//     std::cout << "加密字符： " << std::endl;
-//     std::cout << encryptText << std::endl;
-//     decryptText = rsa_pri_decrypt(encryptText, sk);
-//     std::cout << "解密字符： " << std::endl;
-//     std::cout << decryptText << std::endl;
-
-//     system("pause");
-//     return 0;
-// }
+    string ST = srcText;
+    cout << "-----------------------------------\n";
+    for (int j = 0; j < ST.size(); j++)
+    {
+        cout << hex << (int)(unsigned char)ST[j] << "";
+    }
+    cout << endl;
+    for (int i = 0; i < 10; i++)
+    {
+        ST = rsa_pri_decrypt(ST, sk);
+        cout << "-----------------------------------\n";
+        for (int j = 0; j < ST.size(); j++)
+        {
+            cout << hex << (int)(unsigned char)ST[j] << "";
+        }
+        cout << endl;
+    }
+    cout << "******************************************\n";
+    cout << "-----------------------------------\n";
+    for (int j = 0; j < ST.size(); j++)
+    {
+        cout << hex << (int)(unsigned char)ST[j] << "";
+    }
+    cout << endl;
+    for (int i = 0; i < 10; i++)
+    {
+        ST = rsa_pub_encrypt(ST, pk);
+        cout << "-----------------------------------\n";
+        for (int j = 0; j < ST.size(); j++)
+        {
+            cout << hex << (int)(unsigned char)ST[j] << "";
+        }
+        cout << endl;
+    }
+    system("pause");
+    return 0;
+}

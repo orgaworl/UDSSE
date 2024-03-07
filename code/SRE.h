@@ -37,12 +37,14 @@ public:
         H = NULL;
         B = NULL;
     }
-    MSK_S(MSK_S &copy)
+    MSK_S(MSK_S *&copy,pairing_t&pairing)
     {
-        sk = new SK_S(*(copy.sk));
-        pp = new PP_S(*(copy.pp));
-        H = new H_S(*(copy.H));
-        B = new B_S(*(copy.B));
+        sk = new SK_S(copy->sk,pairing);
+        pp = new PP_S(copy->pp,pairing);
+        H = new H_S(copy->H);
+        B = new B_S(copy->B);
+        cout<<sk->i<<endl;
+        cout<<pp->d<<endl;
     }
     ~MSK_S()
     {
@@ -73,7 +75,7 @@ public:
 // int SRE_Enc(pairing_t &pairing,MSK_S*&msk,element_t &m,element_t& t);
 // int SRE_KRev(pairing_t &pairing,MSK_S*&msk,element_t t[]);
 // int SRE_Dec(pairing_t &pairing,MSK_S*&msk,CT_S*ct,element_t &tag);
-int SRE_KGen(pairing_t &pairing, MSK_S *msk, int lambda, int b, int h, int d);
+int SRE_KGen(pairing_t &pairing, MSK_S *&msk, int lambda, int b, int h, int d);
 int SRE_Enc(pairing_t &pairing, MSK_S *msk, element_t &m, element_t *&tagList, CT_S *&ct);
 int SRE_KRev(pairing_t &pairing, MSK_S *msk, element_t t[], int tagNum);
 int SRE_KRev(pairing_t &pairing, MSK_S *msk, vector<element_t*> &tagList);

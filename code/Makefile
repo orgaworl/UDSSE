@@ -1,10 +1,11 @@
 # makefile
 prog= ../prog/main.bin
 lib= -L. -lpbc -lgmp -lssl -lcrypto
+ob_RSA= ./RSA.cpp ./testRSA.cpp
 ob_PRF= ./PRF.cpp 
 ob_UPE= ./UPE.cpp ./testUPE.cpp
 ob_SRE= ./UPE.cpp ./BloomFilter.cpp ./SRE.cpp ./testSRE.cpp
-ob_UDSSE=  ./UPE.cpp ./BloomFilter.cpp ./PRF.cpp ./RSA.cpp ./SRE.cpp ./UDSSE.cpp 
+ob_UDSSE=  ./UPE.cpp ./BloomFilter.cpp ./PRF.cpp ./RSA.cpp ./SRE.cpp ./UDSSE.cpp ./testUDSSE.cpp
 ob_client= ./UPE.cpp ./BloomFilter.cpp ./PRF.cpp ./RSA.cpp ./SRE.cpp ./UDSSE.cpp ./CS.cpp ./testClient.cpp
 ob_server= ./UPE.cpp ./BloomFilter.cpp ./PRF.cpp ./RSA.cpp ./SRE.cpp ./UDSSE.cpp ./CS.cpp ./testServer.cpp
 
@@ -12,6 +13,9 @@ ob_server= ./UPE.cpp ./BloomFilter.cpp ./PRF.cpp ./RSA.cpp ./SRE.cpp ./UDSSE.cpp
 
 test:
 	g++ ./test.cpp -o $(prog)
+	$(prog)
+RSA:
+	g++ $(ob_RSA) -o $(prog) $(lib)
 	$(prog)
 PRF:
 	g++ $(ob_PRF) -o $(prog) $(lib)
@@ -25,7 +29,7 @@ SRE:
 UDSSE:
 	clear
 	g++  $(ob_UDSSE) -o $(prog) $(lib) -w
-	
+	$(prog)
 server: 
 	clear
 	g++ $(ob_server) -o ./server.bin $(lib) -w

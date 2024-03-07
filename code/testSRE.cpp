@@ -36,7 +36,7 @@ int main()
     int d = 1;
     int lambda = 1024;
     CT_S *CT;
-    MSK_S *MSK = new MSK_S;
+    MSK_S *MSK;
 
     // (3) 明文相关参数
     // 明文tag

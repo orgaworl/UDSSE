@@ -30,8 +30,11 @@
 #include "RSA.h"
 #include "PRF.h"
 using namespace std;
-#define TRANS_BUF_SIZE 1024
-
+#define OFFLINE 1
+#define PRINT 1
+#define TRANS_BUF_SIZE 4096+b_MAX_VALUE
+#define MAX_BUF_SIZE 1024
+#define IND_LEN 128
 // // config
 // int lambda_ = 1024;
 // int b_ = 64;
@@ -62,8 +65,6 @@ public:
     {
         c = 0;
         msk = NULL;
-        D.clear();
-        ST.clear();
     }
     // LDB_ENTRY(LDB_ENTRY const &copy)
     // {

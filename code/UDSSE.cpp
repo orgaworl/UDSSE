@@ -10,7 +10,6 @@ int lambda_ = 1024;
 int b_ = 64;
 int h_ = 4;
 
-
 EDB edb;
 EDB edb_cache;
 LDB ldb;
@@ -21,7 +20,62 @@ string Ks;
 string sk;
 string pk;
 
+#ifdef OFFLINE
+char gbuf[4096];
+#endif
 
+void printMSK(MSK_S *mskR)
+{
+	cout << "----------------MSK:----------------\n";
+	cout << "----SK:----\n";
+	element_out_str(stdout, 16, mskR->sk->galpha);
+	cout << "\n";
+	element_out_str(stdout, 16, mskR->sk->sk0);
+	cout << "\n";
+	for (int ii = 0; ii < mskR->sk->i + 1; ii++)
+	{
+		element_out_str(stdout, 16, mskR->sk->SKmain[ii][0]);
+		cout << "\n";
+		element_out_str(stdout, 16, mskR->sk->SKmain[ii][1]);
+		cout << "\n";
+		element_out_str(stdout, 16, mskR->sk->SKmain[ii][2]);
+		cout << "\n";
+	}
+	cout << "----PP:----\n";
+	printf("%d\n", mskR->pp->d);
+	for (int i = 0; i < mskR->pp->d + 3; i++)
+	{
+		element_out_str(stdout, 16, mskR->pp->PP[i]);
+		cout << "\n";
+	}
+
+	cout << "--------------------------------\n";
+}
+void printStr(string str)
+{
+	cout << "----------------STR BYTE----------------\n";
+	for (int i = 0; i < str.size(); i++)
+		cout << hex << (int)(unsigned char)str[i];
+	printf("\n");
+	cout << "--------------------------------\n";
+}
+
+void printCT(CT_S *ct)
+{
+	cout << "----------------CT:----------------\n";
+	cout << "d: " << ct->d << endl;
+	for (int i = 0; i < ct->d + 2; i++)
+	{
+		element_out_str(stdout, 16, ct->CT[i]);
+		printf("\n");
+	}
+	for (int i = 0; i < ct->d; i++)
+	{
+		element_out_str(stdout, 16, ct->tagList[i]);
+		printf("\n");
+	}
+	cout << "--------------------------------\n";
+}
 
 // Setup Part
 int UDSSE_Setup_Client(pairing_t &pairing, int sfd, int lambda, int d)
@@ -42,45 +96,65 @@ int UDSSE_Setup_Client(pairing_t &pairing, int sfd, int lambda, int d)
 
 	// send PK to server
 	char buf[TRANS_BUF_SIZE];
-	memcpy(buf, pk.c_str(), pk.size());
+	char *poi = buf + 4;
+	memcpy(poi, pk.c_str(), pk.size());
+	poi += pk.size();
+
+	int lenSum = poi - buf;
+	*(int *)buf = lenSum;
+
+#ifdef OFFLINE
+	memcpy(gbuf, buf, lenSum);
+#endif
+#ifndef OFFLINE
 	send(sfd, buf, pk.size(), 0);
+#endif
 
 	return 0;
 }
 int UDSSE_Setup_Server(pairing_t &pairing, int sfd)
 {
 	// reveive pk
-	printf("mark1");
 	char buf[TRANS_BUF_SIZE];
-	int len = read(sfd, buf, sizeof(buf));
-	pk = string(buf, len);
-	printf("mark2");
+
+#ifdef OFFLINE
+	memcpy(buf, gbuf, TRANS_BUF_SIZE);
+#endif
+#ifndef OFFLINE
+	read(sfd, buf, sizeof(buf));
+#endif
+	int lenSum = *(int *)buf;
+	pk = string(buf + 4, lenSum);
+
 	return 0;
 }
 
 // Search Part
 int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega)
 {
-	// A. 
+	// A.
 	if (ldb.count(omega) == 0)
 	{
 		return -1;
 	}
-	//LDB_ENTRY *entry = &ldb[omega];
-	MSK_S *mskR = new MSK_S(*(ldb[omega]->msk));
-	vector<element_t>temp;
-	MSK_S *sk;
+	MSK_S *mskR = new MSK_S(ldb[omega]->msk, pairing);
 	SRE_KRev(pairing, mskR, ldb[omega]->D);
-	string Komega = PRF(Ks, omega);
 
+	// #ifdef PRINT
+	// 	printf("Search Client mskR\n");
+	// 	printMSK(mskR);
+	// #endif
+
+	string Komega = PRF(Ks, omega);
 	int c = ldb[omega]->c;
 	string ST = ldb[omega]->ST;
 
-
+	printf("SEARCH: client send data to the server \n");
 	// B. send (msk_R,Komega/tkn,ST,c) to server
 	char buf[TRANS_BUF_SIZE];
-	char *poi = buf;
+	char *poi = buf + 4;
 	int len = -1;
+	int lenSum = 0;
 
 	string bytes = MSK2Bytes(mskR);
 	len = bytes.size();
@@ -88,6 +162,11 @@ int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega)
 	poi += sizeof(int);
 	memcpy(poi, bytes.c_str(), len);
 	poi += len;
+
+	// #ifdef PRINT
+	// 	printf("SEARCH client MSK BYTES\n");
+	// 	printStr(bytes);
+	// #endif
 
 	len = Komega.size();
 	*(int *)poi = len;
@@ -102,23 +181,55 @@ int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega)
 	poi += len;
 
 	*(int *)poi = c;
+	poi += sizeof(int);
 
+	lenSum = poi - buf;
+	*(int *)buf = lenSum;
+	*poi = 0;
+
+#ifdef OFFLINE
+	memcpy(gbuf, buf, lenSum);
+#endif
+#ifndef OFFLINE
 	send(sfd, buf, TRANS_BUF_SIZE, 0);
+#endif
+	printf("SEARCH: client finish sending \n");
 	return 0;
 }
+
 int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 {
-
+	printf("SEARCH: server start receive \n");
 	// A.接收(msk_R,Komega/tkn,ST,c)
 	char buf[TRANS_BUF_SIZE];
-	int totalLen = read(sfd, buf, sizeof(buf));
 	char *poi = buf;
 	int len = -1;
+	int tempLen = 0;
+
+#ifdef OFFLINE
+	memcpy(buf, gbuf, TRANS_BUF_SIZE);
+#endif
+#ifndef OFFLINE
+	read(sfd, buf, sizeof(buf));
+#endif
+
+	int lenSum = *(int *)poi;
+	poi += sizeof(int);
 
 	len = *(int *)poi;
 	poi += sizeof(int);
-	MSK_S *mskR = Bytes2MSK(pairing,poi);
+	// #ifdef PRINT
+	// 	printf("SEARCH SERVER MSK BYTES\n");
+	// 	string temp(poi, len);
+	// 	printStr(temp);
+	// #endif
+
+	MSK_S *mskR = Bytes2MSK(pairing, poi);
 	poi += len;
+
+	// #ifdef PRINT
+	// 	printMSK(mskR);
+	// #endif
 
 	len = *(int *)poi;
 	poi += sizeof(int);
@@ -131,33 +242,67 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 	poi += len;
 
 	int c = *(int *)poi;
+	poi += sizeof(int);
 
+	if (lenSum != poi - buf)
+	{
+		printf("error decode in search\n");
+	}
+	printf("SEARCH: server finish receiving \n");
+	printf("SEARCH: server start searching \n");
 	// B. 执行协议
 
 	// bytes            bytes           CT_S(element[] )    	  element                   bytes
 	//      --RSA解密-->     --转化-->                --ECC解密-->            --转化为字节码-->
 	len = -1;
-	// vector<element_t> Res_tag;
 	vector<string> Res_plain; //{tag,ct} 集合
 
+	printf("      | rsa decrry. \n");
 	// 1. RSA解密
 	for (long long i = 0; i <= c; i++)
 	{
 
 		string UT = HMAC_SHA256(Komega, ST);
 		string stream = HMAC_MD5(Komega, ST);
-		string plain(edb[UT]->e);
-
-		len = plain.length();
-		for (int i = 0; i < len; i++)
+#ifdef PRINT
+		printf("ST:\n");
+		printStr(ST);
+		printf("\n");
+		printf("UT:\n");
+		printStr(UT);
+		printf("\n");
+		printf("stram:\n");
+		printStr(stream);
+		printf("\n");
+#endif
+		if (edb.count(UT) == 0)
 		{
-			plain[i] = plain[i] ^ stream[i % HASH2_LENGTH];
+			continue;
 		}
-		// Res_tag.push_back(edb[UT].tag);
+
+		string plain(edb[UT]->e);
+		// len = plain.length();
+		// for (int i = 0; i < len; i++)
+		// {
+		// 	plain[i] = plain[i] ^ stream[i % HASH2_LENGTH];
+		// }
+		// #ifdef PRINT
+		// 		printf("plain:\n");
+		// 		for (int i = 0; i < plain.length(); i++)
+		// 		{
+		// 			printf("%02x ", plain[i]);
+		// 		}
+		// 		printf("\n");
+		// #endif
 		Res_plain.push_back(plain);
 		ST = rsa_pub_encrypt(ST, pk);
+		//ST = rsa_pri_decrypt(ST, sk); 
 	}
+	// #ifdef PRINT
+	// 	cout << "entry num on the keyword:" << Res_plain.size() << endl;
+	// #endif
 
+	printf("      | transfer. \n");
 	// 2. 将字节转化为element array
 	len = Res_plain.size();
 	vector<CT_S *> Res_ct(len);
@@ -168,48 +313,61 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 	// 此时得到 {(tag,ct),...}
 
 	// 3. ECC 解密
-	int m = Res_plain.size();
+	printf("      | ecc decrry. \n");
 	element_t plain;
 	element_init_GT(plain, pairing);
 
-	vector<element_t*> Res_tag_dec;
+	int m = Res_plain.size();
 	vector<string> Res_plain_dec;
 	for (int i = 0; i < m; i++)
 	{
 		int mark = SRE_Dec(pairing, mskR, Res_ct[i], plain);
+		// #ifdef PRINT
+		// 		printf("ind in element:\n");
+		// 		element_out_str(stdout, 16, plain);
+		// 		printf("\n");
+		// #endif
 		if (mark == SRE_DEC_SUCCESS)
 		{
+			printf("             |  sucess. \n");
 			// ind
-			element_to_bytes((unsigned char *)buf, plain);
-			string tempstr = buf;
+			int tempLen = element_to_bytes((unsigned char *)buf, plain);
+			string tempstr(buf, tempLen);
 			Res_plain_dec.push_back(tempstr);
-
-			// tag
-			Res_tag_dec.push_back(Res_ct[i]->tagList);
+		}
+		else
+		{
+			printf("             |  fail. \n");
 		}
 	}
-	// 回显给client
-	len = Res_tag_dec.size();
-	for (int i = 0; i < len; i++)
+	printf("SEARCH: server finish searching \n");
+// 回显给client
+#ifdef PRINT
+	m = Res_plain_dec.size();
+	printf("SEARCH: server return results(totaly %d). \n", m);
+	for (int i = 0; i < m; i++)
 	{
-		sprintf(buf, "%s", Res_plain_dec[i].c_str());
-		write(sfd, buf, strlen(buf));
+		// printf("HEX:\n");
+		// printStr(Res_plain_dec[i]);
+		// printf("STR:\n");
+		cout << "      | " << i + 1 << " :" << Res_plain_dec[i] << endl;
 	}
+#endif
 
+	printf("SEARCH: server ends. \n");
 	return 0;
 }
 
 //  Update Part
 int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, string ind)
 {
-
-	// A. 
+	// A.
 	if (ldb.count(omega) == 0)
 	{
 		// 不存在则创建
-		LDB_ENTRY *entry=new LDB_ENTRY();
+		LDB_ENTRY *entry = new LDB_ENTRY();
 		SRE_KGen(pairing, entry->msk, lambda_, b_, h_, 1); // MSK
-		ldb.insert(pair<string, LDB_ENTRY*>(omega, entry));
+		ldb.insert(pair<string, LDB_ENTRY *>(omega, entry));
 	}
 	// 计算PRF值(tag)
 	string tagBytes = PRF(Kt, omega + ind);
@@ -218,6 +376,7 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 	element_t tag;
 	element_init_Zr(tag, pairing);
 	element_from_hash(tag, (void *)tagBytes.c_str(), TAG_LEN);
+
 	element_t *tagList;
 	tagList = &tag;
 
@@ -225,22 +384,36 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 	if (op == OP_DEL)
 	{
 		ldb[omega]->D.push_back(&tag);
+		return 0;
 	}
 	else if (op != OP_ADD && op != OP_DEL)
 	{
 		printf("NOT SUPPORTED OPERATION ! ");
+		return -1;
 	}
 
 	// ADD OP
+	string ind_128B(IND_LEN, 0);
+	for (int i = 0; i < ind.size(); i++)
+	{
+		ind_128B[i] = ind[i];
+	}
 	if (op == OP_ADD)
 	{
 		// 计算密文 : bytes --> element --> CT_S
 		element_t plain;
 		element_init_GT(plain, pairing);
-		element_from_hash(plain, (unsigned char *)ind.c_str(), ind.size());
+		int plainLen = element_from_bytes(plain, (unsigned char *)ind_128B.c_str());
+		// #ifdef PRINT
+		// 		printf("ind in element:\n");
+		// 		element_out_str(stdout, 16, plain);
+		// 		printf("\n");
+		// #endif
 		CT_S *ct;
 		SRE_Enc(pairing, ldb[omega]->msk, plain, tagList, ct);
-
+		// #ifdef PRINT
+		// 		printCT(ct);
+		// #endif
 		// CT_S --> bytes
 		string bytes = CT2Bytes(ct);
 
@@ -253,31 +426,49 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 			{
 				buf[i] = rand();
 			}
-			ldb[omega]->c = 0;	 // c
+			ldb[omega]->c = 0;	  // c
 			ldb[omega]->ST = buf; // ST
+			printf("rand ST\n");
 		}
 		else
 		{
+			printf("gene ST\n");
 			ldb[omega]->c += 1;
 			ldb[omega]->ST = rsa_pri_decrypt(ldb[omega]->ST, sk);
+			// ldb[omega]->ST = rsa_pub_encrypt(ldb[omega]->ST, sk);
 		}
+
 		std::string ST = ldb[omega]->ST;
 		std::string UT = HMAC_SHA256(Komega, ST);
 		std::string stream = HMAC_MD5(Komega, ST);
-
+#ifdef PRINT
+		printf("%s\n",(char*)omega.c_str());
+		printStr(ST);
+		printf("\n");
+		// printf("UT:\n");
+		// printStr(UT);
+		// printf("\n");
+		// printf("stram:\n");
+		// printStr(stream);
+		// printf("\n");
+#endif
 		int len = bytes.length();
 		std::string e(len, '\0');
+		// for (int i = 0; i < len; i++)
+		// {
+		// 	e[i] = bytes[i] ^ stream[i % HASH2_LENGTH];
+		// }
 		for (int i = 0; i < len; i++)
 		{
-			e[i] = bytes[i] ^ stream[i % HASH2_LENGTH];
+			e[i] = bytes[i];
 		}
 
 		// B. send UT and e
 		char buf[TRANS_BUF_SIZE];
-		char *poi = buf;
+		char *poi = buf + 4;
 
 		// UT
-		len = e.length();
+		len = UT.length();
 		*(int *)poi = len;
 		poi += sizeof(int);
 		memcpy(poi, UT.c_str(), len);
@@ -289,23 +480,39 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 		memcpy(poi, e.c_str(), len);
 		poi += len;
 
+		//
+		int lenSum = poi - buf;
+		*(int *)buf = lenSum;
+		// *buf = 0;
+
+#ifdef OFFLINE
+		memcpy(gbuf, buf, lenSum);
+#endif
+#ifndef OFFLINE
 		send(sfd, buf, TRANS_BUF_SIZE, 0);
+#endif
 	}
 	return 0;
 }
-
-
-
 
 int UDSSE_Update_Server(pairing_t &pairing, int sfd)
 {
 	// A. receive UT and e
 	char buf[TRANS_BUF_SIZE];
-	int totalLen = read(sfd, buf, sizeof(buf));
 	char *poi = buf;
+	int len = -1;
 
+#ifdef OFFLINE
+	memcpy(buf, gbuf, TRANS_BUF_SIZE);
+#endif
+#ifndef OFFLINE
+	read(sfd, buf, sizeof(buf));
+#endif
+
+	int lenSum = *(int *)poi;
+	poi += sizeof(int);
 	// UT
-	int len = *(int *)poi;
+	len = *(int *)poi;
 	poi += sizeof(int);
 	string UT(poi, len);
 	poi += len;
@@ -315,8 +522,18 @@ int UDSSE_Update_Server(pairing_t &pairing, int sfd)
 	poi += sizeof(int);
 	string e(poi, len);
 	poi += len;
-
+	//
+	if (lenSum != poi - buf)
+	{
+		printf("error decode in update\n");
+	}
+	// #ifdef PRINT
+	// #endif
 	// B. 存储
+	if (edb.count(UT) == 0)
+	{
+		edb[UT] = new EDB_ENTRY();
+	}
 	edb[UT]->e = e;
 	return 0;
 }
@@ -345,299 +562,381 @@ int UDSSE_Update_Server(pairing_t &pairing, int sfd)
 // 	write(sfd, buf, len);
 // }
 
-
-
-
-
 string SK2Bytes(SK_S *sk)
 {
-    char bytes[TRANS_BUF_SIZE];
-    char *poi = bytes;
-    int len = -1;
-    char buf[128];
+	char bytes[TRANS_BUF_SIZE];
+	char *poi = bytes + 4; // 留出4字节存储总长度
 
-    *(int *)poi = sk->i;
-    poi += sizeof(int);
+	int len = -1;
+	char buf[MAX_BUF_SIZE];
 
-    len = element_to_bytes_compressed((unsigned char *)buf, sk->galpha);
-    *(int *)poi = len;
-    poi += sizeof(int);
-    memcpy(poi, buf, len);
-    poi += len;
+	*(int *)poi = sk->i;
+	poi += sizeof(int);
 
-    len = element_to_bytes_compressed((unsigned char *)buf, sk->sk0);
-    *(int *)poi = len;
-    poi += sizeof(int);
-    memcpy(poi, buf, len);
-    poi += len;
+	len = element_to_bytes((unsigned char *)buf, sk->galpha);
+	*(int *)poi = len;
+	poi += sizeof(int);
+	memcpy(poi, buf, len);
+	poi += len;
 
-    int i = sk->i;
-    for (int j = 0; j < i; j++)
-    {
-        for (int k = 0; k < 3; k++)
-        {
-            len = element_to_bytes_compressed((unsigned char *)buf, sk->SKmain[j][k]);
-            *(int *)poi = len;
-            poi += sizeof(int);
-            memcpy(poi, buf, len);
-            poi += len;
-        }
-    }
-    string res = bytes;
-    return res;
+	len = element_to_bytes((unsigned char *)buf, sk->sk0);
+	*(int *)poi = len;
+	poi += sizeof(int);
+	memcpy(poi, buf, len);
+	poi += len;
+
+	int i = sk->i;
+	for (int j = 0; j < i + 1; j++)
+	{
+		for (int k = 0; k < 3; k++)
+		{
+			len = element_to_bytes((unsigned char *)buf, sk->SKmain[j][k]);
+			*(int *)poi = len;
+			poi += sizeof(int);
+			memcpy(poi, buf, len);
+			poi += len;
+			if (len == 0)
+			{
+				printf("zero");
+			}
+		}
+	}
+
+	int lenSum = poi - bytes;
+	*(int *)bytes = lenSum;
+	string res(bytes, lenSum);
+	return res;
 }
 SK_S *Bytes2SK(pairing_t &pairing, char *bytes)
 {
-    char *poi = bytes;
-    int len;
+	char *poi = bytes;
+	int len;
+	int test;
 
-    int i = *(int *)poi;
-    poi += sizeof(int);
+	int lenSum = *(int *)poi;
+	poi += sizeof(int);
 
-    SK_S *sk = new SK_S(i, pairing);
+	int i = *(int *)poi;
+	poi += sizeof(int);
 
-    len = *(int *)poi;
-    poi += sizeof(int);
-    element_from_bytes_compressed(sk->galpha, (unsigned char *)poi);
-    poi += len;
+	SK_S *sk = new SK_S(i, pairing);
 
-    len = *(int *)poi;
-    poi += sizeof(int);
-    element_from_bytes_compressed(sk->sk0, (unsigned char *)poi);
-    poi += len;
+	len = *(int *)poi;
+	poi += sizeof(int);
+	element_from_bytes(sk->galpha, (unsigned char *)poi);
+	poi += len;
 
-    for (int j = 0; j < i; j++)
-    {
-        for (int k = 0; k < 3; k++)
-        {
-            len = *(int *)poi;
-            poi += sizeof(int);
-            element_from_bytes_compressed(sk->SKmain[j][k], (unsigned char *)poi);
-            poi += len;
-        }
-    }
-    return sk;
+	len = *(int *)poi;
+	poi += sizeof(int);
+	element_from_bytes(sk->sk0, (unsigned char *)poi);
+	poi += len;
+
+	for (int j = 0; j < i + 1; j++)
+	{
+		for (int k = 0; k < 3; k++)
+		{
+			len = *(int *)poi;
+			poi += sizeof(int);
+			test = element_from_bytes(sk->SKmain[j][k], (unsigned char *)poi);
+			poi += len;
+			if (test != len)
+			{
+				printf("******** decode error*************\n");
+				return 0;
+			}
+		}
+	}
+	if (lenSum != poi - bytes)
+	{
+		printf("decode error in sk\n");
+	}
+	return sk;
 }
 string PP2Bytes(PP_S *pp)
 {
-    char bytes[TRANS_BUF_SIZE];
-    char *poi = bytes;
-    int len = -1;
-    char buf[128];
+	char bytes[TRANS_BUF_SIZE];
+	char *poi = bytes + 4;
+	int len = -1;
+	int lenSum = 0;
+	char buf[MAX_BUF_SIZE];
 
-    *(int *)poi = pp->d;
-    poi += sizeof(int);
+	*(int *)poi = pp->d;
+	poi += sizeof(int);
 
-    // d+3个
-    int loop = pp->d + 3;
-    for (int i = 0; i < loop; i++)
-    {
-        len = element_to_bytes_compressed((unsigned char *)buf, pp->PP[i]);
-        *(int *)poi = len;
-        poi += sizeof(int);
-        memcpy(poi, buf, len);
-        poi += len;
-    }
-    string res = bytes;
-    return res;
+	// d+3个
+	int loop = pp->d + 3;
+	for (int i = 0; i < loop; i++)
+	{
+		len = element_to_bytes((unsigned char *)buf, pp->PP[i]);
+		*(int *)poi = len;
+		poi += sizeof(int);
+		memcpy(poi, buf, len);
+		poi += len;
+	}
+
+	lenSum = poi - bytes;
+	*(int *)bytes = lenSum;
+	*poi = 0;
+	string res(bytes, lenSum);
+	return res;
 }
 PP_S *Bytes2PP(pairing_t &pairing, char *bytes)
 {
-    char *poi = bytes;
-    int len;
+	char *poi = bytes;
+	int len;
 
-    int d = *(int *)poi;
-    poi += sizeof(int);
+	int lenSum = *(int *)poi;
+	poi += sizeof(int);
+	int d = *(int *)poi;
+	poi += sizeof(int);
 
-    PP_S *pp = new PP_S(d, pairing);
-    int loop = d + 3;
-    for (int i = 0; i < loop; i++)
-    {
-        len = *(int *)poi;
-        poi += sizeof(int);
-        element_from_bytes_compressed(pp->PP[i], (unsigned char *)poi);
-        poi += len;
-    }
-    return pp;
+	PP_S *pp = new PP_S(d, pairing);
+	int loop = d + 3;
+	for (int i = 0; i < loop; i++)
+	{
+		len = *(int *)poi;
+		poi += sizeof(int);
+		element_from_bytes(pp->PP[i], (unsigned char *)poi);
+		poi += len;
+	}
+	if (lenSum != poi - bytes)
+	{
+		printf("decode error in pp\n");
+	}
+	return pp;
 }
 string H2Bytes(H_S *h)
 {
-    char bytes[TRANS_BUF_SIZE];
-    *(int *)bytes = h->h;
-    string res = bytes;
-    return res;
+	char bytes[TRANS_BUF_SIZE];
+	char *poi = bytes + 4;
+
+	*(int *)poi = h->h;
+	poi += sizeof(int);
+
+	int lenSum = poi - bytes;
+	*(int *)bytes = lenSum;
+	*poi = 0;
+	string res(bytes, lenSum);
+	return res;
 }
 H_S *Bytes2H(char *bytes)
 {
-    int h = *(int *)bytes;
-    H_S *h_s = new H_S(h);
-    return h_s;
+	int h = *(int *)bytes;
+	H_S *h_s = new H_S(h);
+	return h_s;
 }
 string B2Bytes(B_S *b)
 {
-    char bytes[TRANS_BUF_SIZE];
-    char *poi = bytes;
-
-    //*(int*)poi=b->b;
-    // poi+=sizeof(int);
-
-    string main = b->main->to_string();
-    memcpy(poi, main.c_str(), main.length());
-    string res = bytes;
-    return res;
+	// char bytes[TRANS_BUF_SIZE];
+	// uint8_t temp;
+	// for(int i=0;i<b_MAX_VALUE;i++)
+	// {
+	// 	if(i%8==0)
+	// 	{
+	// 		bytes[i/8]=temp;
+	// 		temp=0;
+	// 	}
+	// 	temp=temp<<1;
+	// 	temp=temp|(b->main[i]==true);
+	// }
+	string res = b->main->to_string();
+	return res;
 }
 B_S *Bytes2B(char *bytes)
 {
-    char *poi = bytes;
-
-    // int b=*(int*)poi;
-    // poi+=sizeof(int);
-    // string b(bytes,b_MAX_VALUE/8);
-    bitset<b_MAX_VALUE> temp(bytes, b_MAX_VALUE / 8);
-    // bitset<b_MAX_VALUE>temp(b);
-    B_S *b_s = new B_S(temp);
-    return b_s;
+	bitset<b_MAX_VALUE> temp(bytes);
+	B_S *b = new B_S(temp);
+	return b;
 }
 
 string MSK2Bytes(MSK_S *msk)
 {
-    char buf[2048];
-    char *poi = buf;
-    int len = -1;
-    string sk = SK2Bytes(msk->sk);
-    string pp = PP2Bytes(msk->pp);
-    string h = H2Bytes(msk->H);
-    string b = B2Bytes(msk->B);
+	char buf[TRANS_BUF_SIZE];
+	char *poi = buf + 4;
+	int len = -1;
+	int lenSum = 0;
+	string sk = SK2Bytes(msk->sk);
+	string pp = PP2Bytes(msk->pp);
+	string h = H2Bytes(msk->H);
+	string b = B2Bytes(msk->B);
+	// #ifdef PRINT
+	// 	printf("trans from sk\n");
+	// 	printStr(sk);
+	// #endif
+	len = sk.length();
+	*(int *)poi = len;
+	poi += sizeof(int);
+	memcpy(poi, sk.c_str(), len);
+	poi += len;
 
-    len = sk.length();
-    *(int *)poi = len;
-    poi += sizeof(int);
-    memcpy(poi, sk.c_str(), len);
-    poi += len;
+	len = pp.length();
+	*(int *)poi = len;
+	poi += sizeof(int);
+	memcpy(poi, pp.c_str(), len);
+	poi += len;
 
-    len = pp.length();
-    *(int *)poi = len;
-    poi += sizeof(int);
-    memcpy(poi, pp.c_str(), len);
-    poi += len;
+	len = h.length();
+	*(int *)poi = len;
+	poi += sizeof(int);
+	memcpy(poi, h.c_str(), len);
+	poi += len;
 
-    len = h.length();
-    *(int *)poi = len;
-    poi += sizeof(int);
-    memcpy(poi, h.c_str(), len);
-    poi += len;
+	len = b.length();
+	*(int *)poi = len;
+	poi += sizeof(int);
+	memcpy(poi, b.c_str(), len);
+	poi += len;
 
-    len = b.length();
-    *(int *)poi = len;
-    poi += sizeof(int);
-    memcpy(poi, b.c_str(), len);
-    poi += len;
-
-    string res = buf;
-    return res;
+	lenSum = poi - buf;
+	*(int *)buf = lenSum;
+	*poi = 0;
+	string res(buf, lenSum);
+	// #ifdef PRINT
+	// 	printf("trans from msk\n");
+	// 	printStr(res);
+	// #endif
+	return res;
 }
 MSK_S *Bytes2MSK(pairing_t &pairing, char *bytes)
 {
-    char *poi = bytes;
-    int len = -1;
+	char *poi = bytes;
+	int len = -1;
+	char buf[MAX_BUF_SIZE];
 
-    len = *(int *)poi;
-    len += sizeof(int);
-    string temp(poi, len);
-    poi += len;
-    SK_S *sk = Bytes2SK(pairing, (char *)temp.c_str());
+	int lenSum = *(int *)poi;
+	poi += sizeof(int);
+	// #ifdef PRINT
+	// 	printf("trans to msk \n");
+	// 	string temp(poi, lenSum);
+	// 	printStr(temp);
+	// #endif
 
-    len = *(int *)poi;
-    poi += sizeof(int);
-    temp = string(poi, len);
-    poi += len;
-    PP_S *pp = Bytes2PP(pairing, (char *)temp.c_str());
+	len = *(int *)poi;
+	poi += sizeof(int);
+	// #ifdef PRINT
+	// 	printf("trans to sk \n");
+	// 	string temp2(poi, len);
+	// 	printStr(temp2);
+	// #endif
+	memcpy(buf, poi, len);
+	poi += len;
 
-    len = *(int *)poi;
-    poi += sizeof(int);
-    temp = string(poi, len);
-    poi += len;
-    H_S *h = Bytes2H((char *)temp.c_str());
+	SK_S *sk = Bytes2SK(pairing, buf);
+	len = *(int *)poi;
+	poi += sizeof(int);
+	memcpy(buf, poi, len);
+	poi += len;
+	PP_S *pp = Bytes2PP(pairing, buf);
 
-    len = *(int *)poi;
-    poi += sizeof(int);
-    temp = string(poi, len);
-    poi += len;
-    B_S *b = Bytes2B((char *)temp.c_str());
+	len = *(int *)poi;
+	poi += sizeof(int);
+	memcpy(buf, poi, len);
+	poi += len;
+	H_S *h = Bytes2H(buf);
 
-    MSK_S *msk = new MSK_S();
-    msk->sk = sk;
-    msk->pp = pp;
-    msk->H = h;
-    msk->B = b;
+	len = *(int *)poi;
+	poi += sizeof(int);
+	memcpy(buf, poi, len);
+	poi += len;
+	B_S *b = Bytes2B(buf);
 
-    return msk;
+	if (lenSum != poi - bytes)
+	{
+		printf("decode error in msk\n");
+	}
+	MSK_S *msk = new MSK_S();
+	msk->sk = sk;
+	msk->pp = pp;
+	msk->H = h;
+	msk->B = b;
+
+	return msk;
 }
 
 string CT2Bytes(CT_S *ct)
 {
-    int d = ct->d;
-    unsigned char bytes[1024];
-    unsigned char *poi = bytes;
+	// 临时值
+	char bytes[TRANS_BUF_SIZE];
+	char *poi = bytes + 4;
+	unsigned char buf[MAX_BUF_SIZE];
+	int eleLen = -1;
+	int lenSum = 0;
 
-    // 临时值
-    unsigned char buf[128];
-    int eleLen = -1;
-    // 1. 存储d
-    *(int *)poi = d;
-    poi += sizeof(int);
-    for (int i = 0; i < d + 2; i++)
-    {
-        // 2.1 存储每个元素长度
-        eleLen = element_to_bytes_compressed(buf, ct->CT[i]);
-        *(int *)poi = eleLen;
-        poi += sizeof(int);
-        // 2.2 存储每个元素的具体内容
-        memcpy(poi, buf, eleLen);
-        poi += eleLen;
-    }
-    for (int i = 0; i < d; i++)
-    {
-        // 2.1 存储每个tag长度
-        eleLen = element_to_bytes_compressed(buf, ct->tagList[i]);
-        *(int *)poi = eleLen;
-        poi += sizeof(int);
-        // 2.2 存储每个tag的具体内容
-        memcpy(poi, buf, eleLen);
-        poi += eleLen;
-    }
-    string res = (char *)bytes;
-    return res;
+	// 1. 存储d
+	int d = ct->d;
+	*(int *)poi = d;
+	poi += sizeof(int);
+
+	for (int i = 0; i < d + 2; i++)
+	{
+		eleLen = element_to_bytes(buf, ct->CT[i]);
+		// 2.1 存储每个元素长度
+		*(int *)poi = eleLen;
+		poi += sizeof(int);
+		// 2.2 存储每个元素的具体内容
+		memcpy(poi, buf, eleLen);
+		poi += eleLen;
+	}
+	for (int i = 0; i < d; i++)
+	{
+		eleLen = element_to_bytes(buf, ct->tagList[i]);
+		// 2.1 存储每个tag长度
+		*(int *)poi = eleLen;
+		poi += sizeof(int);
+		// 2.2 存储每个tag的具体内容
+		memcpy(poi, buf, eleLen);
+		poi += eleLen;
+	}
+	lenSum = poi - bytes;
+	*(int *)bytes = lenSum;
+	string res(bytes, lenSum);
+	return res;
 }
 
-CT_S *Bytes2CT(pairing_t &pairing, string bytes)
+CT_S *Bytes2CT(pairing_t &pairing, string str)
 {
-    int len = -1;
-    char *poi = (char *)bytes.c_str();
+	int len = -1;
+	int tempLen;
+	char *bytes = (char *)str.c_str();
+	char *poi = bytes;
 
-    // 1. d
-    int d = *(int *)poi;
-    poi += sizeof(int);
+	int lenSum = *(int *)poi;
+	poi += sizeof(int);
+	// 1. d
+	int d = *(int *)poi;
+	poi += sizeof(int);
 
-    CT_S *ct = new CT_S(d, pairing);
-    for (int i = 0; i < d + 2; i++)
-    {
-        // 2.1 长度
-        len = *(int *)poi;
-        poi += sizeof(int);
+	CT_S *ct = new CT_S(d, pairing);
+	for (int i = 0; i < d + 2; i++)
+	{
+		// 2.1 长度
+		len = *(int *)poi;
+		poi += sizeof(int);
 
-        // 2.2 内容
-        element_from_bytes_compressed(ct->CT[i], (unsigned char *)poi);
-        poi += len;
-    }
-    for (int i = 0; i < d; i++)
-    {
-        // 2.1 存储每个tag长度
-        len = *(int *)poi;
-        poi += sizeof(int);
-        // 2.2 内容
-        element_from_bytes_compressed(ct->tagList[i], (unsigned char *)poi);
-        poi += len;
-    }
-    return ct;
+		// 2.2 内容
+		tempLen = element_from_bytes(ct->CT[i], (unsigned char *)poi);
+		if (tempLen != len)
+		{
+			printf("error1\n");
+		}
+		poi += len;
+	}
+	for (int i = 0; i < d; i++)
+	{
+		// 2.1 存储每个tag长度
+		len = *(int *)poi;
+		poi += sizeof(int);
+		// 2.2 内容
+		tempLen = element_from_bytes(ct->tagList[i], (unsigned char *)poi);
+		if (tempLen != len)
+		{
+			printf("error1\n");
+		}
+		poi += len;
+	}
+	if (lenSum != poi - bytes)
+	{
+		printf("decode error in ct\n");
+	}
+	return ct;
 }

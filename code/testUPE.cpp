@@ -33,7 +33,7 @@ int test_UPE(const long d, long pucTimes, int updateTime)
 {
   // 1.2 其他参数设置
   // (1) 明文无关参数
-  unsigned char *decryptResult = new unsigned char[128];
+  
   PP_S *PP0;
   PP_S *PP;
   SK_S *SK0;
@@ -119,6 +119,7 @@ int test_UPE(const long d, long pucTimes, int updateTime)
   // fprintf(decryT,"%f ",((double)endT-startT)*1000.0/CLOCKS_PER_SEC);
 
   // check result
+  unsigned char *decryptResult = new unsigned char[128];
   element_to_bytes(decryptResult, plain);
   if (element_cmp(M, plain) == 0)
   {

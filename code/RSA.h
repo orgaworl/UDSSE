@@ -15,8 +15,12 @@ using namespace std;
 
 #define RSA_KEY_LENGTH 2048 // 密钥长度
 
-int RSA_KeyGen();
-void generateRSAKey(std::string pk, std::string sk);
+
+void generateRSAKey(std::string &pk, std::string &sk);
 std::string rsa_pub_encrypt(const std::string &clearText, const std::string &pubKey);
 std::string rsa_pri_decrypt(const std::string &cipherText, const std::string &priKey);
-int testRSA(int argc, char **argv);
+int testRSA();
+
+#define PK_generate generateRSAKey
+#define PK_encrypt rsa_pri_decrypt
+#define PK_decrypt rsa_pub_encrypt

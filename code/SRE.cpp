@@ -12,8 +12,9 @@
 // #define MAX_TAG_NUM 100
 
 // 生成MSK,用以加密具有d个tag的明文
-int SRE_KGen(pairing_t &pairing, MSK_S *msk, int lambda, int b, int h, int d)
+int SRE_KGen(pairing_t &pairing, MSK_S *&msk, int lambda, int b, int h, int d)
 {
+    msk=new MSK_S();
     BF_Gen(b, h, msk->H, msk->B);
     UPE_Keygen(pairing, lambda, d, msk->pp, msk->sk);
     return 0;
@@ -57,13 +58,13 @@ int SRE_KRev(pairing_t &pairing, MSK_S *msk, vector<element_t*> &tagList)
 int SRE_Dec(pairing_t &pairing, MSK_S *msk, CT_S *ct, element_t &m)
 {
     int len = ct->d;
-    // for (int i = 0; i < len; i++)
-    // {
-    //     if (BF_Check(msk->H, msk->B, ct->tagList[i]))
-    //     {
-    //         return SRE_DEC_FAIL;
-    //     }
-    // }
+    for (int i = 0; i < len; i++)
+    {
+        if (BF_Check(msk->H, msk->B, ct->tagList[i]))
+        {
+            return SRE_DEC_FAIL;
+        }
+    }
     UPE_Decrypt(pairing, msk->sk, ct, m);
     return SRE_DEC_SUCCESS;
 }

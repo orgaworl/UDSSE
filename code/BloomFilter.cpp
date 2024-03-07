@@ -56,7 +56,6 @@ int BF_Update(H_S *&H, B_S *&B, element_t &x)
     for (int i = 0; i < loop; i++)
     {
         // 计算Hash值
-
         hashValue = Hash2Int(x, i);
         hashValue = hashValue % b_MAX_VALUE;
         if (hashValue < 0)
@@ -73,11 +72,18 @@ int BF_Check(H_S *&H, B_S *&B, element_t &x)
 {
 
     int loop = H->h;
+    int hashValue=0;
     for (int i = 0; i < loop; i++)
     {
         // 计算Hash值
-        uint hashValue = Hash2Int(x, i);
-        if (B->main[hashValue % b_MAX_VALUE] == false)
+        
+        hashValue = Hash2Int(x, i);
+        hashValue = hashValue % b_MAX_VALUE;
+        if (hashValue < 0)
+        {
+            hashValue += b_MAX_VALUE;
+        }
+        if (B->main->test(hashValue) == false)
         {
             return BF_CHECK_FALSE;
         }
