@@ -31,8 +31,8 @@
 #include "PRF.h"
 using namespace std;
 #define OFFLINE 1
-#define PRINT 1
-#define TRANS_BUF_SIZE 4096+b_MAX_VALUE
+// #define PRINT 1
+#define TRANS_BUF_SIZE 4096 + b_MAX_VALUE
 #define MAX_BUF_SIZE 1024
 #define IND_LEN 128
 // // config
@@ -52,14 +52,14 @@ public:
         e.clear();
     }
 };
-#define EDB map<std::string, EDB_ENTRY*> // UT -> Entry
+#define EDB map<std::string, EDB_ENTRY *> // UT -> Entry
 // Local DB
 class LDB_ENTRY
 {
 public:
     int c; // update times
     MSK_S *msk;
-    vector<element_t*> D;
+    vector<element_t *> D;
     std::string ST;
     LDB_ENTRY()
     {
@@ -80,7 +80,7 @@ public:
         delete msk;
     }
 };
-#define LDB map<std::string, LDB_ENTRY*> // omega -> Entry
+#define LDB map<std::string, LDB_ENTRY *> // omega -> Entry
 
 // EDB edb;
 // EDB edb_cache;
@@ -128,11 +128,9 @@ public:
 #define DECODE_FAIL NULL
 #define ENCODE_FAIL ""
 
-
 // HASH function define
 #define HASH1_LENGTH SHA256_HASH_LENGTH
 #define HASH2_LENGTH MD5_HASH_LENGTH
-
 
 // UDSSE FUNCTION
 int UDSSE_Setup_Client(pairing_t &pairing, int sfd, int lambda, int d);
@@ -142,12 +140,8 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd);
 int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, string ind);
 int UDSSE_Update_Server(pairing_t &pairing, int sfd);
 
-int UDSSE_UpdateKey_Client(pairing_t &pairing, int sfd);
+int UDSSE_UpdateKey_Client(pairing_t &pairing, int sfd, string omega);
 int UDSSE_UpdateKey_Server(pairing_t &pairing, int sfd);
-
-
-
-
 
 string SK2Bytes(SK_S *sk);
 string PP2Bytes(PP_S *pp);
@@ -162,3 +156,5 @@ H_S *Bytes2H(char *bytes);
 B_S *Bytes2B(char *bytes);
 MSK_S *Bytes2MSK(pairing_t &pairing, char *bytes);
 CT_S *Bytes2CT(pairing_t &pairing, string bytes);
+string Token2Bytes(token *tk);
+token *Bytes2Token(pairing_t &pairing, char *bytes);

@@ -70,7 +70,7 @@ public:
     }
 };
 
-int Hash2Int(element_t &x, int HashChoice);
+unsigned int Hash2Int(element_t &x, int HashChoice);
 int accessB(B_S *&B, uint hashValue, int val = -1);
 int BF_Gen(int b, int h, H_S *&H, B_S *&B);
 int BF_Update(H_S *&H, B_S *&B, element_t &x);

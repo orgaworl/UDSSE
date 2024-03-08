@@ -20,10 +20,18 @@ string Ks;
 string sk;
 string pk;
 
+// PAIRING
+PP_S *pp;
+
 #ifdef OFFLINE
 char gbuf[4096];
 #endif
-
+void printTag(element_t tag)
+{
+	cout << "----------------tag:----------------\n";
+	element_out_str(stdout, 16, tag);
+	cout << "\n--------------------------------\n";
+}
 void printMSK(MSK_S *mskR)
 {
 	cout << "----------------MSK:----------------\n";
@@ -132,7 +140,7 @@ int UDSSE_Setup_Server(pairing_t &pairing, int sfd)
 // Search Part
 int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega)
 {
-	printf("SEARCH: client look up local secret key over key word:\n (((%s))) .\n", omega.c_str());
+	printf("SEARCH: search on key word: \"%s\" .\n", omega.c_str());
 	// A.
 	if (ldb.count(omega) == 0)
 	{
@@ -142,10 +150,10 @@ int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega)
 	MSK_S *mskR = new MSK_S(ldb[omega]->msk, pairing);
 	SRE_KRev(pairing, mskR, ldb[omega]->D);
 
-	// #ifdef PRINT
-	// 	printf("Search Client mskR\n");
-	// 	printMSK(mskR);
-	// #endif
+#ifdef PRINT
+	printf("Search Client mskR\n");
+	printMSK(mskR);
+#endif
 
 	string Komega = PRF(Ks, omega);
 	int c = ldb[omega]->c;
@@ -165,10 +173,10 @@ int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega)
 	memcpy(poi, bytes.c_str(), len);
 	poi += len;
 
-	// #ifdef PRINT
-	// 	printf("SEARCH client MSK BYTES\n");
-	// 	printStr(bytes);
-	// #endif
+#ifdef PRINT
+	printf("SEARCH client MSK BYTES\n");
+	printStr(bytes);
+#endif
 
 	len = Komega.size();
 	*(int *)poi = len;
@@ -201,7 +209,7 @@ int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega)
 
 int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 {
-	printf("SEARCH: server start receive \n");
+	printf("SEARCH: server start receive .\n");
 	// A.接收(msk_R,Komega/tkn,ST,c)
 	char buf[TRANS_BUF_SIZE];
 	char *poi = buf;
@@ -220,18 +228,12 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 
 	len = *(int *)poi;
 	poi += sizeof(int);
-	// #ifdef PRINT
-	// 	printf("SEARCH SERVER MSK BYTES\n");
-	// 	string temp(poi, len);
-	// 	printStr(temp);
-	// #endif
-
 	MSK_S *mskR = Bytes2MSK(pairing, poi);
 	poi += len;
 
-	// #ifdef PRINT
-	// 	printMSK(mskR);
-	// #endif
+#ifdef PRINT
+	printMSK(mskR);
+#endif
 
 	len = *(int *)poi;
 	poi += sizeof(int);
@@ -253,9 +255,11 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 	printf("SEARCH: server finish receiving \n");
 	printf("SEARCH: server start searching \n");
 	// B. 执行协议
+	/*
+		 bytes            bytes           CT_S(element[] )    	  element                   bytes
+			  --RSA解密-->     --转化-->                --ECC解密-->            --转化为字节码-->
+	*/
 
-	// bytes            bytes           CT_S(element[] )    	  element                   bytes
-	//      --RSA解密-->     --转化-->                --ECC解密-->            --转化为字节码-->
 	len = -1;
 	vector<string> Res_plain; //{tag,ct} 集合
 
@@ -266,52 +270,46 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 
 		string UT = HMAC_SHA256(Komega, ST);
 		string stream = HMAC_MD5(Komega, ST);
-		#ifdef PRINT
-				printf("ST:\n");
-				printStr(ST);
-				printf("\n");
-				// printf("UT:\n");
-				// printStr(UT);
-				// printf("\n");
-				printf("stream:\n");
-				printStr(stream);
-				printf("\n");
-		#endif
+#ifdef PRINT
+		printf("ST:\n");
+		printStr(ST);
+		printf("\n");
+		// printf("UT:\n");
+		// printStr(UT);
+		// printf("\n");
+		printf("stream:\n");
+		printStr(stream);
+		printf("\n");
+#endif
 		if (edb.count(UT) == 0)
 		{
+			printf("             |  not exist in EDB. \n");
 			continue;
 		}
-
 		string plain(edb[UT]->e);
 		len = plain.length();
-		//-------------------------------------------------------------
-				for (int i = 0; i < len; i++)
-				{
-					plain[i] = plain[i] ^ stream[i % HASH2_LENGTH];
-				}
-		// #ifdef PRINT
-		// 		printf("plain:\n");
-		// 		for (int i = 0; i < plain.length(); i++)
-		// 		{
-		// 			printf("%02x ", plain[i]);
-		// 		}
-		// 		printf("\n");
-		// #endif
-		//-------------------------------------------------------------
+		for (int i = 0; i < len; i++)
+		{
+			plain[i] = plain[i] ^ stream[i % HASH2_LENGTH];
+		}
 		Res_plain.push_back(plain);
-		// ST = rsa_pub_encrypt(ST, pk);
+
 		if (i != c)
 		{
 			ST = RsaPubDecrypt(ST, pk);
+			// ST = rsa_pub_encrypt(ST, pk);
+			// ST = rsa_pri_decrypt(ST, sk);
+			// ST = rsa_pri_decrypt(ST, sk);
+			if (ST == "")
+			{
+				printf("             |  fail. \n");
+			}
+			else
+			{
+				printf("             |  sucess. \n");
+			}
 		}
-
-		// ST = rsa_pri_decrypt(ST, sk);
-		// ST = rsa_pri_decrypt(ST, sk);
 	}
-	// #ifdef PRINT
-	// 	cout << "entry num on the keyword:" << Res_plain.size() << endl;
-	// #endif
-
 	printf("      | transfer. \n");
 	// 2. 将字节转化为element array
 	len = Res_plain.size();
@@ -319,11 +317,19 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 	for (int i = 0; i < len; i++)
 	{
 		Res_ct[i] = Bytes2CT(pairing, Res_plain[i]);
+		if (Res_ct[i] == NULL)
+		{
+			printf("             |  fail. \n");
+		}
+		else
+		{
+			printf("             |  sucess. \n");
+		}
 	}
 	// 此时得到 {(tag,ct),...}
 
 	// 3. ECC 解密
-	printf("      | ecc decrry. \n");
+	printf("      | pbulic key decrry. \n");
 	element_t plain;
 	element_init_GT(plain, pairing);
 
@@ -332,11 +338,11 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 	for (int i = 0; i < m; i++)
 	{
 		int mark = SRE_Dec(pairing, mskR, Res_ct[i], plain);
-		// #ifdef PRINT
-		// 		printf("ind in element:\n");
-		// 		element_out_str(stdout, 16, plain);
-		// 		printf("\n");
-		// #endif
+#ifdef PRINT
+		printf("ind in element:\n");
+		element_out_str(stdout, 16, plain);
+		printf("\n");
+#endif
 		if (mark == SRE_DEC_SUCCESS)
 		{
 			printf("             |  sucess. \n");
@@ -350,21 +356,17 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 			printf("             |  fail. \n");
 		}
 	}
-	printf("SEARCH: server finish searching \n");
-// 回显给client
-#ifdef PRINT
+
+
+	
+	// 回显给client
+
 	m = Res_plain_dec.size();
 	printf("SEARCH: server return results(totaly %d). \n", m);
 	for (int i = 0; i < m; i++)
 	{
-		// printf("HEX:\n");
-		// printStr(Res_plain_dec[i]);
-		// printf("STR:\n");
 		cout << "      | " << i + 1 << " :" << Res_plain_dec[i] << endl;
 	}
-#endif
-
-	printf("SEARCH: server ends. \n");
 	return UDSSE_Search_Client_Sucess;
 }
 
@@ -383,17 +385,19 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 	string tagBytes = PRF(Kt, omega + ind);
 
 	// tag转化到ECC上
-	element_t tag;
-	element_init_Zr(tag, pairing);
-	element_from_hash(tag, (void *)tagBytes.c_str(), TAG_LEN);
+	element_t *tag = new element_t[1];
+	element_init_Zr(*tag, pairing);
+	element_from_hash(*tag, (void *)tagBytes.c_str(), TAG_LEN);
+	element_t *tagList = tag;
 
-	element_t *tagList;
-	tagList = &tag;
+#ifdef PRINT
+	printTag(*tag);
+#endif
 
 	// DEL OP or Other OP
 	if (op == OP_DEL)
 	{
-		ldb[omega]->D.push_back(&tag);
+		ldb[omega]->D.push_back(tag);
 		return UDSSE_Update_Client_Sucess;
 	}
 	else if (op != OP_ADD && op != OP_DEL)
@@ -431,14 +435,17 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 			}
 			ldb[omega]->c = 0;					  // c
 			ldb[omega]->ST = string(buf, ST_LEN); // ST
+#ifdef PRINT
 			printf("rand ST\n");
+#endif
 		}
 		else
 		{
+#ifdef PRINT
 			printf("gene ST\n");
+#endif
 			ldb[omega]->c += 1;
 			// ldb[omega]->ST = rsa_pri_decrypt(ldb[omega]->ST, sk);
-
 			// ST = rsa_pub_encrypt(ldb[omega]->ST, pk);
 			// ldb[omega]->ST = rsa_pub_encrypt(ldb[omega]->ST, sk);
 			ST = RsaPriEncrypt(ldb[omega]->ST, sk);
@@ -454,30 +461,23 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 		ST = ldb[omega]->ST;
 		std::string UT = HMAC_SHA256(Komega, ST);
 		std::string stream = HMAC_MD5(Komega, ST);
-		#ifdef PRINT
-				// printf("%s\n", (char *)omega.c_str());
-				printStr(ST);
-				printf("\n");
-				// printf("UT:\n");
-				// printStr(UT);
-				// printf("\n");
-				printf("stram:\n");
-				printStr(stream);
-				printf("\n");
-		#endif
+#ifdef PRINT
+		printf("%s\n", (char *)omega.c_str());
+		printStr(ST);
+		printf("\n");
+		printf("UT:\n");
+		printStr(UT);
+		printf("\n");
+		printf("stram:\n");
+		printStr(stream);
+		printf("\n");
+#endif
 		int len = bytes.length();
 		std::string e(len, '\0');
-		//-------------------------------------------------------------
 		for (int i = 0; i < len; i++)
 		{
 			e[i] = bytes[i] ^ stream[i % HASH2_LENGTH];
 		}
-		// for (int i = 0; i < len; i++)
-		// {
-		// 	e[i] = bytes[i];
-		// }
-		//-------------------------------------------------------------
-
 
 		// B. send UT and e
 		char buf[TRANS_BUF_SIZE];
@@ -526,25 +526,24 @@ int UDSSE_Update_Server(pairing_t &pairing, int sfd)
 
 	int lenSum = *(int *)poi;
 	poi += sizeof(int);
+
 	// UT
 	len = *(int *)poi;
 	poi += sizeof(int);
 	string UT(poi, len);
 	poi += len;
-
 	// e
 	len = *(int *)poi;
 	poi += sizeof(int);
 	string e(poi, len);
 	poi += len;
-	//
+
+	// check
 	if (lenSum != poi - buf)
 	{
 		printf("error decode in update\n");
 		return UDSSE_Update_Server_Fail;
 	}
-	// #ifdef PRINT
-	// #endif
 	// B. 存储
 	if (edb.count(UT) == 0)
 	{
@@ -556,27 +555,145 @@ int UDSSE_Update_Server(pairing_t &pairing, int sfd)
 
 // Update Key Part
 
-// int UDSSE_UpdateKey(pairing_t &pairing, int sfd, string omega)
-// {
-// 	mapValPair *temp = &(MAP[omega]);
-// 	if (temp == nullptr)
-// 	{
-// 		SRE_KGen(pairing, temp->msk, lambda_, b_, h_, d_);
-// 		temp->i = 0;
-// 		temp->D.clear();
-// 	}
-// 	token *token;
-// 	UPE_UPDATE_SK(pairing, temp->msk->pp, temp->msk->sk, token);
+int UDSSE_UpdateKey_Client(pairing_t &pairing, int sfd, string omega)
+{
+	LDB_ENTRY *entry = NULL;
+	if (ldb.count(omega) == 0)
+	{
+		// 不存在则创建
+		entry = new LDB_ENTRY();
+		SRE_KGen(pairing, entry->msk, lambda_, b_, h_, 1); // MSK
+		ldb.insert(pair<string, LDB_ENTRY *>(omega, entry));
+	}
 
-// 	// send token
-// 	unsigned char buf[1024];
-// 	int len;
-// 	len = element_to_bytes(buf, token->d_alpha);
-// 	write(sfd, buf, len);
-// 	write(sfd, " ", 1);
-// 	len = element_to_bytes(buf, token->galpha);
-// 	write(sfd, buf, len);
-// }
+	token *token;
+	UPE_UPDATE_SK(pairing, entry->msk->pp, entry->msk->sk, token);
+
+	string Komega = PRF(Ks, omega);
+	int c = ldb[omega]->c;
+	string ST = ldb[omega]->ST;
+
+	// B. send token,Komega/tkn,ST,c
+	char bytes[TRANS_BUF_SIZE];
+	char *poi = bytes + 4;
+	char buf[MAX_BUF_SIZE];
+	int len;
+	int lenSum = 0;
+
+	string tokenBytes = Token2Bytes(token);
+	len = tokenBytes.size();
+	*(int *)poi = len;
+	poi += sizeof(int);
+	memcpy(poi, tokenBytes.c_str(), len);
+	poi += len;
+
+	len = Komega.size();
+	*(int *)poi = len;
+	poi += sizeof(int);
+	memcpy(poi, Komega.c_str(), len);
+	poi += len;
+
+	len = ST.size();
+	*(int *)poi = len;
+	poi += sizeof(int);
+	memcpy(poi, ST.c_str(), len);
+	poi += len;
+
+	*(int *)poi = c;
+	poi += sizeof(int);
+
+	lenSum = poi - bytes;
+	*(int *)bytes = lenSum;
+
+#ifdef OFFLINE
+	memcpy(gbuf, bytes, lenSum);
+#endif
+#ifndef OFFLINE
+	write(sfd, buf, lenSum);
+#endif
+	return UDSSE_UpdateKey_Client_Sucess;
+}
+
+int UDSSE_UpdateKey_Server(pairing_t &pairing, int sfd)
+{
+	// A. receive
+	char bytes[TRANS_BUF_SIZE];
+	char *poi = bytes;
+	int len = -1;
+
+#ifdef OFFLINE
+	memcpy(bytes, gbuf, TRANS_BUF_SIZE);
+#endif
+#ifndef OFFLINE
+	read(sfd, bytes, TRANS_BUF_SIZE);
+#endif
+	int lenSum = *(int *)poi;
+	poi += sizeof(int);
+
+	len = *(int *)poi;
+	poi += sizeof(int);
+	token *tk = Bytes2Token(pairing, poi);
+	poi += len;
+
+	len = *(int *)poi;
+	poi += sizeof(int);
+	string Komega(poi, len);
+	poi += len;
+
+	len = *(int *)poi;
+	poi += sizeof(int);
+	string ST(poi, len);
+	poi += len;
+
+	int c = *(int *)poi;
+	poi += sizeof(int);
+
+	if (lenSum != poi - bytes)
+		printf("error decode in search\n");
+
+	// B. process
+	printf("      | rsa decrry. \n");
+	for (long long i = 0; i <= c; i++)
+	{
+		string UT = HMAC_SHA256(Komega, ST);
+		string stream = HMAC_MD5(Komega, ST);
+		if (edb.count(UT) == 0)
+		{
+			continue;
+		}
+		string plain(edb[UT]->e);
+
+		// 1. oplus decrypt
+		len = plain.length();
+		for (int i = 0; i < len; i++)
+		{
+			plain[i] = plain[i] ^ stream[i % HASH2_LENGTH];
+		}
+
+		// 2. bytes to CT_S
+		CT_S *ct;
+		ct = Bytes2CT(pairing, plain);
+		// 3. Update
+		UPE_UPDATE_CT(pairing, pp, ct, tk); // PP
+		// 4. CT_S to Bytes
+		plain = CT2Bytes(ct);
+		delete ct;
+
+		// 5. oplus encrypt and restore
+		for (int i = 0; i < len; i++)
+		{
+			plain[i] = plain[i] ^ stream[i % HASH2_LENGTH];
+		}
+		edb[UT]->e = plain;
+
+		// 4.下一个加密数据项
+		if (i != c)
+		{
+			ST = RsaPubDecrypt(ST, pk);
+		}
+	}
+	return UDSSE_UpdateKey_Server_Sucess;
+}
 
 string SK2Bytes(SK_S *sk)
 {
@@ -731,13 +848,13 @@ string H2Bytes(H_S *h)
 
 	int lenSum = poi - bytes;
 	*(int *)bytes = lenSum;
-	*poi = 0;
 	string res(bytes, lenSum);
 	return res;
 }
 H_S *Bytes2H(char *bytes)
 {
-	int h = *(int *)bytes;
+	int lenSum = *(int *)bytes;
+	int h = *(int *)(bytes + 4);
 	H_S *h_s = new H_S(h);
 	return h_s;
 }
@@ -775,10 +892,10 @@ string MSK2Bytes(MSK_S *msk)
 	string pp = PP2Bytes(msk->pp);
 	string h = H2Bytes(msk->H);
 	string b = B2Bytes(msk->B);
-	// #ifdef PRINT
-	// 	printf("trans from sk\n");
-	// 	printStr(sk);
-	// #endif
+#ifdef PRINT
+	printf("trans from sk\n");
+	printStr(sk);
+#endif
 	len = sk.length();
 	*(int *)poi = len;
 	poi += sizeof(int);
@@ -805,12 +922,11 @@ string MSK2Bytes(MSK_S *msk)
 
 	lenSum = poi - buf;
 	*(int *)buf = lenSum;
-	*poi = 0;
 	string res(buf, lenSum);
-	// #ifdef PRINT
-	// 	printf("trans from msk\n");
-	// 	printStr(res);
-	// #endif
+#ifdef PRINT
+	printf("trans from msk\n");
+	printStr(res);
+#endif
 	return res;
 }
 MSK_S *Bytes2MSK(pairing_t &pairing, char *bytes)
@@ -821,23 +937,18 @@ MSK_S *Bytes2MSK(pairing_t &pairing, char *bytes)
 
 	int lenSum = *(int *)poi;
 	poi += sizeof(int);
-	// #ifdef PRINT
-	// 	printf("trans to msk \n");
-	// 	string temp(poi, lenSum);
-	// 	printStr(temp);
-	// #endif
+#ifdef PRINT
+	printf("trans to msk \n");
+	string temp(poi, lenSum);
+	printStr(temp);
+#endif
 
 	len = *(int *)poi;
 	poi += sizeof(int);
-	// #ifdef PRINT
-	// 	printf("trans to sk \n");
-	// 	string temp2(poi, len);
-	// 	printStr(temp2);
-	// #endif
 	memcpy(buf, poi, len);
 	poi += len;
-
 	SK_S *sk = Bytes2SK(pairing, buf);
+
 	len = *(int *)poi;
 	poi += sizeof(int);
 	memcpy(buf, poi, len);
@@ -933,7 +1044,7 @@ CT_S *Bytes2CT(pairing_t &pairing, string str)
 		tempLen = element_from_bytes(ct->CT[i], (unsigned char *)poi);
 		if (tempLen != len)
 		{
-			printf("error1\n");
+			printf("decode error in ct 1\n");
 		}
 		poi += len;
 	}
@@ -946,13 +1057,73 @@ CT_S *Bytes2CT(pairing_t &pairing, string str)
 		tempLen = element_from_bytes(ct->tagList[i], (unsigned char *)poi);
 		if (tempLen != len)
 		{
-			printf("error1\n");
+			printf("decode error in ct 2\n");
 		}
 		poi += len;
 	}
 	if (lenSum != poi - bytes)
 	{
-		printf("decode error in ct\n");
+		printf("decode error in ct 3\n");
 	}
 	return ct;
+}
+
+string Token2Bytes(token *tk)
+{
+	char bytes[TRANS_BUF_SIZE];
+	char *poi = bytes + 4;
+	int len = -1;
+	int lenSum = 0;
+
+	len = element_to_bytes((unsigned char *)poi + 4, tk->d_alpha);
+	*(int *)poi = len;
+	poi += sizeof(int);
+	poi += len;
+
+	len = element_to_bytes((unsigned char *)poi + 4, tk->galpha);
+	*(int *)poi = len;
+	poi += sizeof(int);
+	poi += len;
+
+	lenSum = poi - bytes;
+	*(int *)bytes = lenSum;
+	string res(bytes, lenSum);
+	return res;
+}
+token *Bytes2Token(pairing_t &pairing, char *bytes)
+{
+	int len = 0;
+	int testLen = 0;
+	char *poi = bytes;
+	token *tk = new token(pairing);
+
+	int lenSum = *(int *)poi;
+	poi += sizeof(int);
+
+	len = *(int *)poi;
+	poi += sizeof(int);
+	testLen = element_from_bytes(tk->d_alpha, (unsigned char *)poi);
+	if (len != testLen)
+	{
+		delete tk;
+		return DECODE_FAIL;
+	}
+	poi += len;
+
+	len = *(int *)poi;
+	poi += sizeof(int);
+	testLen = element_from_bytes(tk->galpha, (unsigned char *)poi);
+	if (len != testLen)
+	{
+		delete tk;
+		return DECODE_FAIL;
+	}
+	poi += len;
+
+	if (poi - bytes != lenSum)
+	{
+		delete tk;
+		return DECODE_FAIL;
+	}
+	return tk;
 }

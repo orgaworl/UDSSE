@@ -37,33 +37,38 @@ int main()
 
     int mark = 0;
 
-    printf("setup\n");
+
     UDSSE_Setup_Client(pairing, 0, lambda, d);
     UDSSE_Setup_Server(pairing, 0);
 
-    printf("update\n");
+
     UDSSE_Update_Client(pairing, 0, OP_ADD, "key1234567", "ABCDEF");
     UDSSE_Update_Server(pairing, 0);
 
-    printf("update\n");
+ 
     UDSSE_Update_Client(pairing, 0, OP_ADD, "key1234567", "123456");
     UDSSE_Update_Server(pairing, 0);
 
-    printf("update\n");
+
     UDSSE_Update_Client(pairing, 0, OP_ADD, "key1234567", "987654321");
     UDSSE_Update_Server(pairing, 0);
 
-    printf("update\n");
+ 
     UDSSE_Update_Client(pairing, 0, OP_ADD, "key1234567", "test");
     UDSSE_Update_Server(pairing, 0);
 
-    // printf("update\n");
-    // UDSSE_Update_Client(pairing, 0, OP_ADD, "key09876", "A1B2C3");
+
+    UDSSE_Update_Client(pairing, 0, OP_DEL, "key1234567", "987654321");
     // UDSSE_Update_Server(pairing, 0);
 
-    // printf("update\n");
-    // UDSSE_Update_Client(pairing, 0, OP_ADD, "key09876", "12341");
-    // UDSSE_Update_Server(pairing, 0);
+
+    UDSSE_Update_Client(pairing, 0, OP_ADD, "key09876", "A1B2C3");
+    UDSSE_Update_Server(pairing, 0);
+
+
+    UDSSE_Update_Client(pairing, 0, OP_ADD, "key09876", "12341");
+    UDSSE_Update_Server(pairing, 0);
+
 
     printf("search\n");
     mark = UDSSE_Search_Client(pairing, 0, "key1234567");

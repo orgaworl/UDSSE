@@ -14,6 +14,7 @@
 // 生成MSK,用以加密具有d个tag的明文
 int SRE_KGen(pairing_t &pairing, MSK_S *&msk, int lambda, int b, int h, int d)
 {
+    // printf("hash num=%d",h);
     msk=new MSK_S();
     BF_Gen(b, h, msk->H, msk->B);
     UPE_Keygen(pairing, lambda, d, msk->pp, msk->sk);

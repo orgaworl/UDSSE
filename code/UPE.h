@@ -80,7 +80,7 @@ public:
 class CT_S
 {
 public:
-    //char *id;
+    // char *id;
     int d;
     element_t *CT;
     element_t *tagList;
@@ -99,7 +99,7 @@ public:
         {
             element_init_Zr(tagList[i], pairing);
         }
-        //id = NULL;
+        // id = NULL;
     }
     CT_S(CT_S *copy, pairing_t &pairing)
     { // 深复制
@@ -130,9 +130,9 @@ public:
             element_clear(tagList[i]);
         }
         delete[] CT;
-        CT=NULL;
+        CT = NULL;
         delete[] tagList;
-        tagList=NULL;
+        tagList = NULL;
     }
 };
 class PP_S
@@ -166,14 +166,23 @@ public:
             element_clear(PP[i]);
         }
         delete[] PP;
-        PP=NULL;
+        PP = NULL;
     }
 };
 class token
 {
-    public:
+public:
     element_t d_alpha;
     element_t galpha;
+    token()
+    {
+        // empty
+    }
+    token(pairing_t &pairing)
+    {
+        element_init_Zr(d_alpha, pairing);
+        element_init_G1(galpha, pairing);
+    }
     ~token()
     {
         element_clear(d_alpha);
@@ -189,7 +198,7 @@ int H(element_t &result, element_t &x);
 
 int Hash(element_t &result, unsigned char *str);
 
-//void V(pairing_t &pairing, element_t &result, PP_S *&PP_, element_t x, element_t *&xc, long d);
+// void V(pairing_t &pairing, element_t &result, PP_S *&PP_, element_t x, element_t *&xc, long d);
 void V(pairing_t &pairing, element_t &result, PP_S *PP_, element_t x, element_t *&xc, long d);
 
 // 组件

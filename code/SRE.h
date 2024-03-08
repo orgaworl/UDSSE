@@ -71,10 +71,6 @@ public:
     }
 };
 
-// int SRE_KGen(pairing_t &pairing,int lambda,int b,int h);
-// int SRE_Enc(pairing_t &pairing,MSK_S*&msk,element_t &m,element_t& t);
-// int SRE_KRev(pairing_t &pairing,MSK_S*&msk,element_t t[]);
-// int SRE_Dec(pairing_t &pairing,MSK_S*&msk,CT_S*ct,element_t &tag);
 int SRE_KGen(pairing_t &pairing, MSK_S *&msk, int lambda, int b, int h, int d);
 int SRE_Enc(pairing_t &pairing, MSK_S *msk, element_t &m, element_t *&tagList, CT_S *&ct);
 int SRE_KRev(pairing_t &pairing, MSK_S *msk, element_t t[], int tagNum);

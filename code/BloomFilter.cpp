@@ -5,65 +5,68 @@
  */
 
 #include "BloomFilter.h"
-int Hash2Int(element_t &x, int HashChoice)
+unsigned int Hash2Int(element_t &x, int HashChoice)
 {
 
-    char buf[1024];
+    char buf[128];
     int length = element_to_bytes((unsigned char *)buf, x);
     // printf("%lld\n",length);
-    char res[256];
+    char res[64];
+    int digestLen = 0;
     switch (HashChoice)
     {
+    case 0:
+        SHA1((const unsigned char *)buf, length, (unsigned char *)res);
+        digestLen = SHA_DIGEST_LENGTH;
+        break;
     case 1:
         SHA256((const unsigned char *)buf, length, (unsigned char *)res);
+        digestLen = SHA256_DIGEST_LENGTH;
         break;
     case 2:
         MD4((const unsigned char *)buf, length, (unsigned char *)res);
+        digestLen = MD4_DIGEST_LENGTH;
         break;
     case 3:
         MD5((const unsigned char *)buf, length, (unsigned char *)res);
+        digestLen = MD5_DIGEST_LENGTH;
         break;
     default:
-        // SHA1((const unsigned char *)buf, length, (unsigned char *)res);
+        printf("not supported hash function %d\n",HashChoice);
         break;
+
     }
+    unsigned int index=0;
+    char*poi=res;
+    for(int i=0;i<digestLen;i+=sizeof(int))
+    {
+        index=index ^ *(unsigned int *)poi;
+        poi+=sizeof(int);
 
-    // int HashValInt;
-    // printf("%d",hashValue[0]);
-    //  HashValInt=hashValue[0];
-    // HashValInt = *(unsigned int *)hashValue;
-
-    return *(int *)res;
+    }
+    return index;
+    //return *(unsigned int *)res;
 }
 
 int BF_Gen(int b, int h, H_S *&H, B_S *&B)
 {
     // return H and B
     H = new H_S(h);
-    // H->main=new int [h];
-
     B = new B_S;
-    // B->b=b;
-    // B->main=new char [b];
     B->main = new std::bitset<b_MAX_VALUE>();
-
     return 0;
 }
 int BF_Update(H_S *&H, B_S *&B, element_t &x)
 {
     int loop = H->h;
-    int hashValue = 0;
+    unsigned int hashValue = 0;
     for (int i = 0; i < loop; i++)
     {
-        // 计算Hash值
+        // cal Hash
         hashValue = Hash2Int(x, i);
         hashValue = hashValue % b_MAX_VALUE;
-        if (hashValue < 0)
-        {
-            hashValue += b_MAX_VALUE;
-        }
-        //printf("%d\n",hashValue);
-        B->main->set(hashValue,true);
+        //printf("BF update hash value: %d\n",hashValue);
+        B->main->set(hashValue, true);
     }
 
     return 0;
@@ -72,17 +75,13 @@ int BF_Check(H_S *&H, B_S *&B, element_t &x)
 {
 
     int loop = H->h;
-    int hashValue=0;
+    unsigned int hashValue = 0;
     for (int i = 0; i < loop; i++)
     {
-        // 计算Hash值
-        
+        // cal hash
         hashValue = Hash2Int(x, i);
         hashValue = hashValue % b_MAX_VALUE;
-        if (hashValue < 0)
-        {
-            hashValue += b_MAX_VALUE;
-        }
+        //printf("BF check hash value: %d\n", hashValue);
         if (B->main->test(hashValue) == false)
         {
             return BF_CHECK_FALSE;
