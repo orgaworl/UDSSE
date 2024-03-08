@@ -15,7 +15,7 @@
 int SRE_KGen(pairing_t &pairing, MSK_S *&msk, int lambda, int b, int h, int d)
 {
     // printf("hash num=%d",h);
-    msk=new MSK_S();
+    msk = new MSK_S();
     BF_Gen(b, h, msk->H, msk->B);
     UPE_Keygen(pairing, lambda, d, msk->pp, msk->sk);
     return 0;
@@ -41,7 +41,7 @@ int SRE_KRev(pairing_t &pairing, MSK_S *msk, element_t tagList[], int tagNum)
     }
     return 0;
 }
-int SRE_KRev(pairing_t &pairing, MSK_S *msk, vector<element_t*> &tagList)
+int SRE_KRev(pairing_t &pairing, MSK_S *msk, vector<element_t *> &tagList)
 {
     // update MSK
     int tagNum = tagList.size();

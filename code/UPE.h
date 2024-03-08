@@ -2,7 +2,7 @@
 #pragma once
 #include <stdio.h>
 #include <string.h>
-#include <list>
+
 #include <ctime>
 #include <iostream>
 #include "/usr/local/include/pbc/pbc.h"

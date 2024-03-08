@@ -8,7 +8,7 @@
 #include <openssl/pem.h>
 #include <openssl/hmac.h>
 #include <string>
-//#include <strings>
+// #include <strings>
 using namespace std;
 // PRF define
 #define HASH_VALUE_LENGTH 32

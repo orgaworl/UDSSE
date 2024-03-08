@@ -378,7 +378,6 @@ int UPE_Puncture(pairing_t &pairing, PP_S *PP, SK_S *&SKi_1, element_t &tag)
 
 int UPE_UPDATE_SK(pairing_t &pairing, PP_S *PP, SK_S *SK, token *&token_to_send)
 {
-    cout << "mark1";
     // 0. parameters
     int i = SK->i;
     int d = PP->d;
@@ -418,21 +417,17 @@ int UPE_UPDATE_SK(pairing_t &pairing, PP_S *PP, SK_S *SK, token *&token_to_send)
         element_random(d_r[loop]);
         element_add(sum_delta_r, sum_delta_r, d_r[loop]);
     }
-    cout << "mark2";
-    // 2. set token
-    // if (token_to_send != NULL)
-    // {
-    //     delete token_to_send;
-    //     token_to_send = NULL;
-    // }
-    token_to_send = new token;
-    element_init_Zr(token_to_send->d_alpha, pairing);
-    element_set(token_to_send->d_alpha, d_alpha);
 
-    element_init_G1(token_to_send->galpha, pairing);
+    // 2. set token
+    // token_to_send = new token;
+    // element_init_Zr(token_to_send->d_alpha, pairing);
+    // element_init_G1(token_to_send->galpha, pairing);
+
+    token_to_send=new token(pairing);
+    element_set(token_to_send->d_alpha, d_alpha);
     element_set(token_to_send->galpha, SK->galpha);
 
-    cout << "mark3";
+
     // 3. update SK
     // 单独项1
     element_add(tempZr, d_alpha, sum_delta_r);

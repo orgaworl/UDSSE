@@ -53,13 +53,12 @@ int main()
     for (int loop = 0; loop < puncTimes; loop++)
     {
         element_init_Zr(puncTags[loop], pairing);
-        element_set_si(puncTags[loop], loop + 10+d);
+        element_set_si(puncTags[loop], loop + 10 + d);
     }
 
     // 2.生成MSK
     printf("KEYGEN START\n");
     SRE_KGen(pairing, MSK, lambda, b, h, d);
-    
 
     // 3.使用SK对M进行加密
     printf("ENCRYPT START\n");
@@ -70,19 +69,18 @@ int main()
     printf("PUNCTURE \n");
     SRE_KRev(pairing, MSK, puncTags, puncTimes);
 
-
-
     // 6. decrypt
     printf("DECRYPT  \n");
     element_t notPuncTag;
     element_init_Zr(notPuncTag, pairing);
     element_set_si(notPuncTag, 1025);
-    int mark=SRE_Dec(pairing, MSK, CT,plain);
-    if(mark==SRE_DEC_FAIL)
+    int mark = SRE_Dec(pairing, MSK, CT, plain);
+    if (mark == SRE_DEC_FAIL)
     {
         printf("Punctured tag !\n");
     }
-    else{
+    else
+    {
         element_to_bytes(decryptResult, plain);
         if (element_cmp(M, plain) == 0)
         {

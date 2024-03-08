@@ -47,7 +47,7 @@ string PRF(string Key, string seed)
 	unsigned char A[HASH_VALUE_LENGTH + 1];
 	for (int i = 0; i < hashTimes; i++)
 	{
-		
+
 		hmac(A, "SHA256", (unsigned char *)seed.c_str(), seedLen, (unsigned char *)Key.c_str(), KeyLen);
 		for (int j = 0; j < HASH_VALUE_LENGTH; j++)
 		{
@@ -126,7 +126,7 @@ string HMAC_SHA256(string Komega, string ST)
 string HMAC_MD5(string Komega, string ST)
 {
 	char buf[HMAC_MD5_HASH_LENGTH];
-	hmac((unsigned char*)buf, "MD5", (unsigned char *)ST.c_str(), ST.length(), (unsigned char *)Komega.c_str(), Komega.length());
+	hmac((unsigned char *)buf, "MD5", (unsigned char *)ST.c_str(), ST.length(), (unsigned char *)Komega.c_str(), Komega.length());
 	string hmac = buf;
 	return hmac;
 }

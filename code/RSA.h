@@ -4,8 +4,8 @@
  * @Date: 2024-03-03 13:49:14
  */
 #pragma once
-//#include <stdio.h>
-#include<iostream>
+// #include <stdio.h>
+#include <iostream>
 #include <string.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
@@ -18,7 +18,6 @@ using namespace std;
 
 #define RSA_KEY_LENGTH 1024 // 密钥长度
 
-
 void generateRSAKey(std::string &pk, std::string &sk);
 std::string rsa_pub_encrypt(const std::string &clearText, const std::string &pubKey);
 std::string rsa_pri_decrypt(const std::string &cipherText, const std::string &priKey);
@@ -28,8 +27,7 @@ std::string RsaPriDecrypt(const std::string &cipher_text, const std::string &pri
 
 // contrast
 std::string RsaPriEncrypt(const std::string &clear_text, std::string &pri_key);
-std::string RsaPubDecrypt(const std::string & cipher_text, const std::string & pub_key);
-
+std::string RsaPubDecrypt(const std::string &cipher_text, const std::string &pub_key);
 
 int testRSA();
 
