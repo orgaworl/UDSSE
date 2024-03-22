@@ -1,5 +1,6 @@
-code/*.out
-code/*.gch
-.vscode
-prog/*.bin
+src/*.out
+src/*.gch
+build/*
+bin/*
 .*
+.vscode
