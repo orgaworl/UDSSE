@@ -2,3 +2,4 @@ code/*.out
 code/*.gch
 .vscode
 prog/*.bin
+.*
