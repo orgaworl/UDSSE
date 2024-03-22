@@ -1,0 +1,5 @@
+/home/x2y/workspace/github/UDSSE/build/CMakeFiles/rsa.bin.dir
+/home/x2y/workspace/github/UDSSE/build/CMakeFiles/server.bin.dir
+/home/x2y/workspace/github/UDSSE/build/CMakeFiles/client.bin.dir
+/home/x2y/workspace/github/UDSSE/build/CMakeFiles/edit_cache.dir
+/home/x2y/workspace/github/UDSSE/build/CMakeFiles/rebuild_cache.dir
