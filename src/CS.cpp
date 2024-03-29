@@ -55,12 +55,12 @@ int server(void)
     // }
     // UDSSE_Setup_Server(pairing,sfd);
 
+    COMMAND_TYPE command;
     while (1)
     {
         /*读取客户端发送数据*/
-        len = read(cfd, buf, sizeof(buf));
-        COMMAND_TYPE command = *(COMMAND_TYPE *)buf;
-        printf("command:%d ", (int)command);
+        len = read(cfd, &command, COMMAND_BYTE_LENGTH);
+        printf("command %d :", (int)command);
         /*处理客户端数据*/
         if (len == COMMAND_BYTE_LENGTH)
         {
@@ -69,6 +69,7 @@ int server(void)
             {
             case COMMAND_SETUP_CHAR:
                 printf("setup\n ");
+                sleep(4);
                 UDSSE_Setup_Server(pairing,sfd);
                 break;
             case COMMAND_SEARCH_CHAR:
@@ -87,7 +88,7 @@ int server(void)
                 break;
 
             case COMMAND_UPDATEKEY_CHAR:
-                // UDSSE_UpdateKey_Server(pairing,sfd);
+                UDSSE_UpdateKey_Server(pairing,sfd);
                 break;
             default:
                 printf("command error\n");
@@ -99,7 +100,6 @@ int server(void)
     /*关闭链接*/
     close(sfd);
     close(cfd);
-
     return 0;
 }
 
@@ -147,9 +147,7 @@ int client(void)
         case 1:
         // Setup
             send(sfd, &COMMAND_SETUP_CHAR, COMMAND_BYTE_LENGTH, 0);
-            sleep(0.5);
             UDSSE_Setup_Client(pairing, sfd, lambda, d);
-            sleep(1);
             break;
         case 2:
             // ADD

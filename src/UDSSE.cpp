@@ -32,6 +32,18 @@ void printTag(element_t tag)
 	element_out_str(stdout, 16, tag);
 	cout << "\n--------------------------------\n";
 }
+void printBytes(char*buf,int len)
+{
+	cout << "----------------bytes:----------------\n";
+	for(int i=0;i<len;i++) {
+		printf("%02x ",(unsigned char)buf[i]);
+		if(i%16==15) {
+			printf("\n");
+		}
+	}
+	printf("\n");
+	cout << "--------------------------------\n";
+}
 void printMSK(MSK_S *mskR)
 {
 	cout << "----------------MSK:----------------\n";
@@ -110,15 +122,21 @@ int UDSSE_Setup_Client(pairing_t &pairing, int sfd, int lambda, int d)
 	int lenSum = poi - buf;
 	*(int *)buf = lenSum;
 
+#ifdef CHECK_BYTES
+	printBytes(buf,lenSum);
+#endif
+
 #ifdef OFFLINE
 	memcpy(gbuf, buf, lenSum);
 #endif
 #ifndef OFFLINE
-	send(sfd, buf, pk.size(), 0);
+	send(sfd, buf, lenSum, 0);
 #endif
 
 	return UDSSE_Setup_Client_Sucess;
 }
+
+
 int UDSSE_Setup_Server(pairing_t &pairing, int sfd)
 {
 	printf("SETUP:server\n");
@@ -130,10 +148,26 @@ int UDSSE_Setup_Server(pairing_t &pairing, int sfd)
 	memset(gbuf, 0, TRANS_BUF_SIZE);
 #endif
 #ifndef OFFLINE
-	read(sfd, buf, sizeof(buf));
+	int acLen=read(sfd, buf, TRANS_BUF_SIZE);
 #endif
+
 	int lenSum = *(int *)buf;
-	pk = string(buf + 4, lenSum);
+	if(acLen!=lenSum)
+	{
+		printf("receive bytes error\n");
+	}
+#ifdef CHECK_BYTES
+	printBytes(buf,lenSum);
+#endif
+
+	if(lenSum>TRANS_BUF_SIZE) {
+		printf("!!! error: data too long \n");
+	}
+	// pk = string(buf + 4, lenSum);
+	pk=string(buf+4,lenSum-4);
+	// pk = string(buf + 4);
+	printStr(pk);
+	cout<<pk<<endl;
 
 	return UDSSE_Setup_Server_Sucess;
 }
@@ -200,11 +234,15 @@ int UDSSE_Search_Client(pairing_t &pairing, int sfd, string omega)
 	*(int *)buf = lenSum;
 	*poi = 0;
 
+#ifdef CHECK_BYTES
+	printBytes(buf,lenSum);
+#endif
+
 #ifdef OFFLINE
 	memcpy(gbuf, buf, lenSum);
 #endif
 #ifndef OFFLINE
-	send(sfd, buf, TRANS_BUF_SIZE, 0);
+	send(sfd, buf, lenSum, 0);
 #endif
 	// printf("SEARCH: client finish sending \n");
 	return UDSSE_Search_Client_Sucess;
@@ -228,6 +266,10 @@ int UDSSE_Search_Server(pairing_t &pairing, int sfd)
 
 	int lenSum = *(int *)poi;
 	poi += sizeof(int);
+
+#ifdef CHECK_BYTES
+	printBytes(buf,lenSum);
+#endif
 
 	len = *(int *)poi;
 	poi += sizeof(int);
@@ -453,12 +495,15 @@ int UDSSE_Update_Client(pairing_t &pairing, int sfd, OP_TYPE op, string omega, s
 		//
 		int lenSum = poi - buf;
 		*(int *)buf = lenSum;
+#ifdef CHECK_BYTES
+		printBytes(buf,lenSum);
+#endif
 
 #ifdef OFFLINE
 		memcpy(gbuf, buf, lenSum);
 #endif
 #ifndef OFFLINE
-		send(sfd, buf, TRANS_BUF_SIZE, 0);
+		send(sfd, buf, lenSum,0);
 #endif
 	}
 	return UDSSE_Update_Client_Sucess;
@@ -476,12 +521,15 @@ int UDSSE_Update_Server(pairing_t &pairing, int sfd)
 	memset(gbuf, 0, TRANS_BUF_SIZE);
 #endif
 #ifndef OFFLINE
-	read(sfd, buf, sizeof(buf));
+	read(sfd, buf, TRANS_BUF_SIZE);
 #endif
 
 	int lenSum = *(int *)poi;
 	poi += sizeof(int);
 
+#ifdef CHECK_BYTES
+	printBytes(buf,lenSum);
+#endif
 	// UT
 	len = *(int *)poi;
 	poi += sizeof(int);
@@ -497,6 +545,7 @@ int UDSSE_Update_Server(pairing_t &pairing, int sfd)
 	if (lenSum != poi - buf)
 	{
 		printf("error decode in update\n");
+		cout<<lenSum<<endl<<UT<<endl<<e<<endl;
 		return UDSSE_Update_Server_Fail;
 	}
 	// B. 存储

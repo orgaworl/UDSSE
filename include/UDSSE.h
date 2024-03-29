@@ -30,8 +30,9 @@
 #include "RSA.h"
 #include "PRF.h"
 using namespace std;
-#define OFFLINE 1
+// #define OFFLINE 1
 // #define PRINT 1
+#define CHECK_BYTES 1
 #define TRANS_BUF_SIZE 4096 + b_MAX_VALUE
 #define MAX_BUF_SIZE 1024
 #define IND_LEN 128
@@ -68,13 +69,6 @@ public:
         D.clear();
         ST.clear();
     }
-    // LDB_ENTRY(LDB_ENTRY const &copy)
-    // {
-    //     c = copy.c;
-    //     msk = new MSK_S(*copy.msk);
-    //     D = copy.D;
-    //     ST = copy.ST;
-    // }
     ~LDB_ENTRY()
     {
         delete msk;
@@ -82,21 +76,13 @@ public:
 };
 #define LDB map<std::string, LDB_ENTRY *> // omega -> Entry
 
-// EDB edb;
-// EDB edb_cache;
-// LDB ldb;
+
 
 // K
 #define KEY_LEN 32
 #define ST_LEN 32
 #define UT_LEN 32
 
-// string Kt;
-// string Ks;
-
-// // RSA
-// string sk;
-// string pk;
 
 // UPDATE OP define
 #define OP_TYPE bool
