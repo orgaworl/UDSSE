@@ -5,19 +5,19 @@
 -->
 ## Environment:
 
-**Libraries**
+**Required Libraries**
 
 - openssl 3.0.2 15
 
 - PBC     0.5.4
 
 ## How to compile:
-
-This project use CMake to compile the program automaticaly.
-So you just need to run the command below to ues it.
+After you install the required libraries, run the command below to compile the program.
 
 ``` cmake
 sh ./compile.sh
 ```
+
+Then the program will appear in the `bin` folder.
 
 

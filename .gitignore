@@ -2,6 +2,6 @@ src/*.out
 src/*.gch
 build/*
 bin/*
+debug/*
 .*
-.vscode
 cmake-build-debug
