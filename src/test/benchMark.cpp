@@ -3,7 +3,7 @@
  * @Email: orgaworl@outlook.com
  * @Date: 2024-02-21 21:46:36
  */
-#include "../include/CS.h"
+#include "../../include/benchMark.h"
 
 // 1.1 初始化双线性对
 
@@ -78,10 +78,6 @@ int server(void)
             UDSSE_Update_Server(pairing, buf);
             break;
 
-            // del 功能无需 server参与
-            // case COMMAND_DEL_CHAR:
-            //     printf("del\n ");
-            //     break;
 
         case COMMAND_UPDATEKEY_CHAR:
             printf("up key\n ");
@@ -132,7 +128,6 @@ int client(void)
     while (!end)
     {
         system("clear");
-        printClientMenu();
         choice = 0;
         memset(buf, 0, TRANS_BUF_SIZE);
         scanf("%d", &choice);
@@ -193,27 +188,3 @@ int client(void)
     close(sfd);
     return 0;
 }
-
-int printClientMenu(void)
-{
-    printf("\
-    client menu:\n\
-    1:Setup your database in the server.\n\
-    2:Add entries to your database in the server.\n\
-    3:Delete  entries to your database in the server.\n\
-    4.Serch on you database in the server.\n\
-    5.Update Key.\n\
-    9:Exit.\n\
-    Please input your choice(1/2/3/4/9):\n\
-    ");
-    return 0;
-}
-
-// /*从标准输入获取数据*/
-// fgets(buf, sizeof(buf), stdin);
-// /*将数据写给服务器*/
-// write(sfd, buf, strlen(buf));
-// /*从服务器读回转换后数据*/
-// len = read(sfd, buf, sizeof(buf));
-// /*写至标准输出*/
-// write(STDOUT_FILENO, buf, len);

@@ -247,11 +247,6 @@ int UPE_Encrypy(pairing_t &pairing, PP_S *PP_, SK_S *SK, element_t &M, element_t
     }
 
     // 1. 计算密文CT=[    ]  ,  其中根据公钥PP可插值计算V(x)
-    // if (CT_ != NULL)
-    // {
-    //     delete CT_;
-    //     CT_ = NULL;
-    // }
     CT_ = new CT_S(d, pairing);
     element_t *CT = CT_->CT;
     // CT[0]

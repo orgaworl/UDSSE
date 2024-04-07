@@ -120,13 +120,11 @@ string HMAC_SHA256(string Komega, string ST)
 {
 	char buf[HMAC_SHA256_HASH_LENGTH];
 	hmac((unsigned char *)buf, "SHA256", (unsigned char *)ST.c_str(), ST.length(), (unsigned char *)Komega.c_str(), Komega.length());
-	string hmac = buf;
-	return hmac;
+	return string(buf);
 }
 string HMAC_MD5(string Komega, string ST)
 {
 	char buf[HMAC_MD5_HASH_LENGTH];
 	hmac((unsigned char *)buf, "MD5", (unsigned char *)ST.c_str(), ST.length(), (unsigned char *)Komega.c_str(), Komega.length());
-	string hmac = buf;
-	return hmac;
+	return string(buf);
 }

@@ -41,7 +41,6 @@ const char COMMAND_DEL_CHAR = COMMAND_DEL;
 const char COMMAND_UPDATEKEY_CHAR = COMMAND_UPDATEKEY;
 const char COMMAND_END_CHAR=COMMAND_END;
 
-void INIT(pairing_t &pairing);
+void INIT();
 int server(void);
 int client(void);
-int printClientMenu();
