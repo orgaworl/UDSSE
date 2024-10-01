@@ -1,7 +1,14 @@
 src/*.out
 src/*.gch
+
 build/*
+!build/.gitkeep
+
 bin/*
+!bin/.gitkeep
+
 debug/*
+!debug/.gitkeep
+
 .*
 cmake-build-debug
