@@ -26,6 +26,9 @@ cd ./pbc-0.5.14
 ./configure
 sudo make
 sudo make install
+sudo chmod o+w /etc/ld.so.conf
+echo "/usr/local/lib" >> /etc/ld.so.conf
+sudo chmod o-w /etc/ld.so.conf
 ```
 
 ## How to compile:

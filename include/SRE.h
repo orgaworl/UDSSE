@@ -9,7 +9,7 @@
 // #include <ctime>
 // #include <iostream>
 #pragma once
-#include "/usr/local/include/pbc/pbc.h"
+#include "pbc/pbc.h"
 #include <vector>
 #include "UPE.h"
 #include "BloomFilter.h"

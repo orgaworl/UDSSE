@@ -5,7 +5,7 @@
 
 #include <ctime>
 #include <iostream>
-#include "/usr/local/include/pbc/pbc.h"
+#include "pbc/pbc.h"
 #include <openssl/sha.h>
 using namespace std;
 

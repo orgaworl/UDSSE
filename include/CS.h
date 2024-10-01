@@ -18,7 +18,7 @@
 #include <map>
 #include <vector>
 
-#include "/usr/local/include/pbc/pbc.h"
+#include "pbc/pbc.h"
 #include "UDSSE.h"
 #define SERV_PORT 9988
 #define SERV_IP "127.0.0.1"

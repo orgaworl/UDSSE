@@ -5,7 +5,7 @@
  */
 //#include<stdio.h>
 #pragma once
-#include "/usr/local/include/pbc/pbc.h"
+#include "pbc/pbc.h"
 #include <openssl/sha.h>
 #include <openssl/md5.h>
 #include <openssl/md4.h>

@@ -24,7 +24,7 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include "openssl/tls1.h"
-#include "/usr/local/include/pbc/pbc.h"
+#include "pbc/pbc.h"
 
 #include "SRE.h"
 #include "RSA.h"

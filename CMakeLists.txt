@@ -10,7 +10,7 @@ set (EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 include_directories(${PCL_INCLUDE_DIRS} include)
 
 # option
-add_compile_options( -L. -lpbc -lgmp -lssl -lcrypto -w -static) 
+add_compile_options( -L. -lpbc -lgmp -lssl -lcrypto -w ) 
 #set(CMAKE_CXX_FLAGS "-L. -lpbc -lgmp -lssl -lcrypto")
 
 
