@@ -18,17 +18,15 @@
 
 ```shell
 sudo apt install openssl
-sudo apt install gmp
-
+sudo apt install libgmp-dev
+sudo apt install flex
+sudo apt install bison
 wget https://crypto.stanford.edu/pbc/files/pbc-0.5.14.tar.gz
 tar -xzf ./pbc-0.5.14.tar.gz
 cd ./pbc-0.5.14
 ./configure
 sudo make
 sudo make install
-sudo chmod o+w /etc/ld.so.conf
-echo "/usr/local/lib" >> /etc/ld.so.conf
-sudo chmod o-w /etc/ld.so.conf
 ```
 
 ## How to compile:
@@ -40,3 +38,11 @@ sh ./compile.sh
 ```
 
 Then the program will appear in the `bin` folder.
+
+## How to run:
+
+Before you actually run the program, you must run the command below.
+
+```shell
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/libf
+```
