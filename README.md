@@ -44,5 +44,5 @@ Then the program will appear in the `bin` folder.
 Before you actually run the program, you must run the command below.
 
 ```shell
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/libf
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 ```
